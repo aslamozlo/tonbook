@@ -36,7 +36,7 @@ h2{margin:6px 0 0}.note{font-size:14px;color:#5b6a72;margin-top:18px}
 .hb{display:grid;grid-template-columns:70px 1fr 90px;gap:8px;align-items:center;margin:8px 0;font-size:15px}.hb b{display:block;height:16px;border-radius:3px}.hb span:last-child{text-align:right;font-variant-numeric:tabular-nums}
 .ms{color:var(--ok);font-weight:700;margin-top:8px;min-height:24px}
 </style></head><body>
-<header><b>Tipper Ledger</b><small>Pilot mockup. Sample data stays on this phone.</small></header>
+<header><b>Tipper Ledger</b><small>Pilot mockup. Your entries stay on this phone.</small></header>
 <main>
 <section class="tab on" id="t-home"><h2>Last 30 days at a glance</h2><div id="home"></div></section>
 <section class="tab" id="t-trip">
@@ -57,23 +57,19 @@ h2{margin:6px 0 0}.note{font-size:14px;color:#5b6a72;margin-top:18px}
 <button class="btn alt" id="addx">Add expense</button></div></section>
 <section class="tab" id="t-set"><h2>Rates and settings</h2><div id="set"></div>
 <div class="card"><h3>What should change?</h3><textarea id="fb" rows="3" placeholder="Tell us what is missing or confusing"></textarea><button class="btn" id="sendfb">Send on WhatsApp</button></div>
-<button class="btn alt" id="reset">Reset sample data</button>
-<p class="note">This is a mockup for feedback. Rates and names are made up for the demo. Replace them with your own in this tab.</p></section>
+<button class="btn alt" id="reset">Clear everything on this phone</button>
+<p class="note">This is a mockup for feedback. Add your trucks, materials and customers above, then set the fare bands below.</p></section>
 </main>
 <nav><button data-t="home" class="on">Home</button><button data-t="trip">Trip</button><button data-t="dues">Dues</button><button data-t="trucks">Trucks</button><button data-t="set">Settings</button></nav>
 <script>
-const KEY='tipper-mockup-v1',$=s=>document.querySelector(s),F=n=>'₹'+Math.round(n).toLocaleString('en-IN'),day=864e5,now=Date.now();
-const seed=()=>({materials:[{n:'M-sand',r:900},{n:'Jelly (metal)',r:950},{n:'Soil',r:300}],
-bands:[{upTo:10,fare:800},{upTo:20,fare:1400},{upTo:30,fare:2000},{upTo:999,fare:2800}],
-customers:[{id:1,n:'Customer A',ph:'',method:'band',tk:0},{id:2,n:'Customer B',ph:'',method:'tonkm',tk:6},{id:3,n:'Customer C',ph:'',method:'band',tk:0}],
-trucks:[{id:1,n:'Tipper 1',cap:10},{id:2,n:'Tipper 2',cap:12},{id:3,n:'Tipper 3',cap:16},{id:4,n:'Tipper 4',cap:18},{id:5,n:'Tipper 5',cap:20}],
-trips:[{d:now-20*day,cid:1,tid:2,mat:'M-sand',tons:12,km:8,fare:800,amt:11600},{d:now-12*day,cid:2,tid:3,mat:'Jelly (metal)',tons:16,km:15,fare:1440,amt:16640},{d:now-5*day,cid:1,tid:1,mat:'Soil',tons:10,km:12,fare:1400,amt:4400}],
-pays:[{d:now-10*day,cid:1,amt:6000}],exps:[{d:now-6*day,tid:2,type:'Diesel',amt:4500},{d:now-3*day,tid:3,type:'Repair',amt:2500}]});
+const KEY='tipper-ledger-v2',$=s=>document.querySelector(s),F=n=>'₹'+Math.round(n).toLocaleString('en-IN'),day=864e5,now=Date.now();
+const seed=()=>({materials:[],bands:[{upTo:10,fare:0},{upTo:20,fare:0},{upTo:30,fare:0},{upTo:999,fare:0}],customers:[],trucks:[],trips:[],pays:[],exps:[]});
 let S;try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}if(!S)S=seed();
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}},sum=(a,k)=>a.reduce((s,x)=>s+x[k],0),opt=(a,v,l)=>a.map(x=>`<option value="${x[v]}">${x[l]}</option>`).join('');
 const fare=(c,t,k)=>{if(!(t>0&&k>=0))return 0;if(c.method==='tonkm')return t*k*c.tk;return(S.bands.find(b=>k<=b.upTo)||S.bands.at(-1)).fare};
 function calc(){const c=S.customers.find(x=>x.id==$('#cu').value),m=S.materials.find(x=>x.n==$('#ma').value),t=S.trucks.find(x=>x.id==$('#tr').value),tons=+$('#tn').value||0,km=+$('#km').value||0,ov=$('#fo').value,mc=tons*m.r,f=ov!==''?+ov:fare(c,tons,km);return{c,m,t,tons,km,mc,f,amt:mc+f,ov}}
-function slip(){const x=calc(),how=x.ov!==''?'entered by you':x.c.method==='band'?'distance band, '+x.km+' km':'per ton per km';
+const need=()=>S.customers.length&&S.trucks.length&&S.materials.length;
+function slip(){if(!need()){$('#slip').innerHTML='<span class="muted">Add a truck, a customer and a material in Settings first.</span>';$('#warn').innerHTML='';return}const x=calc(),how=x.ov!==''?'entered by you':x.c.method==='band'?'distance band, '+x.km+' km':'per ton per km';
 $('#slip').innerHTML=`<div><span>${x.tons} t × ${F(x.m.r)}</span><span>${F(x.mc)}</span></div><div><span>Fare (${how})</span><span>${F(x.f)}</span></div><div class="tot"><span>Total</span><span>${F(x.amt)}</span></div>`;
 $('#warn').innerHTML=x.tons>x.t.cap?`<div class="warn">${x.tons} t is over ${x.t.n}'s limit of ${x.t.cap} t. Check the load.</div>`:''}
 function dues(){return S.customers.map(c=>{const tr=S.trips.filter(t=>t.cid==c.id).sort((a,b)=>a.d-b.d),paid=sum(S.pays.filter(p=>p.cid==c.id),'amt');let p=paid,old=null;for(const t of tr){if(p>=t.amt)p-=t.amt;else{old=t.d;break}}return{c,bal:sum(tr,'amt')-paid,days:old?Math.floor((Date.now()-old)/day):0,n:tr.length}}).sort((a,b)=>b.bal-a.bal)}
@@ -85,7 +81,7 @@ function home(){const from=Date.now()-30*day,tr=S.trips.filter(t=>t.d>=from),inc
 const k=(l,v,c,h)=>`<div class="kpi"><span class="muted">${l}</span><div class="big ${c}">${v}</div><span class="muted">${h}</span></div>`;
 const wk=[...Array(7)].map((_,i)=>{const s=new Date().setHours(0,0,0,0)-(6-i)*day;return{n:S.trips.filter(t=>t.d>=s&&t.d<s+day).length,l:new Date(s).toLocaleDateString('en-IN',{weekday:'short'})}}),mx=Math.max(1,...wk.map(w=>w.n));
 const tp=S.trucks.map(t=>({n:t.n,p:sum(S.trips.filter(x=>x.tid==t.id&&x.d>=from),'amt')-sum(S.exps.filter(x=>x.tid==t.id&&x.d>=from),'amt')})),tm=Math.max(1,...tp.map(t=>Math.abs(t.p)));
-$('#home').innerHTML=`<div class="net"><span>Left after costs</span><div class="big">${F(inc-ex)}</div></div>
+$('#home').innerHTML=`${need()?'':'<div class="warn">Start here: open Settings and add your trucks, customers and materials.</div>'}<div class="net"><span>Left after costs</span><div class="big">${F(inc-ex)}</div></div>
 <div class="kpis">${k('Earned from trips',F(inc),'',tr.length+' trips')}${k('Money received',F(col),'ok','paid by customers')}${k('Costs',F(ex),'','diesel, repairs, etc.')}${k('Still owed to you',F(owed),late?'late':'',late?late+' waiting over 15 days':'nobody is late')}</div>
 <div class="card"><h3>Call these first</h3>${D.length?D.slice(0,3).map(d=>`<div class="acts" style="grid-template-columns:1fr auto;align-items:center"><div><b>${d.c.n}</b><br><span class="muted">${F(d.bal)} · ${d.days} days</span></div><button class="btn" style="margin:0;width:auto" onclick="remind(${d.c.id})">Remind</button></div>`).join(''):'<span class="muted">Nobody owes you anything.</span>'}</div>
 <div class="card"><h3>Trips in the last 7 days</h3><div class="bars">${wk.map(w=>`<div><small>${w.n}</small><i style="height:${w.n/mx*60}px"></i>${w.l}</div>`).join('')}</div></div>
@@ -94,16 +90,22 @@ function render(){home();
 $('#recent').innerHTML=S.trips.slice(-8).reverse().map(t=>`<div class="card"><h3>${S.customers.find(c=>c.id==t.cid).n}: ${F(t.amt)}</h3><span class="muted">${new Date(t.d).toLocaleDateString('en-IN')} · ${S.trucks.find(x=>x.id==t.tid).n} · ${t.tons} t ${t.mat} · ${t.km} km</span></div>`).join('');
 $('#dues').innerHTML=dues().map(d=>`<div class="card"><h3>${d.c.n}</h3><div class="big ${d.bal>0?'late':'ok'}">${F(d.bal)}</div><span class="muted">${d.bal>0?'Oldest unpaid load: '+d.days+' days ago':'All paid'} · ${d.n} trips</span>${d.bal>0?`<div class="acts"><button class="btn alt" onclick="pay(${d.c.id})">Record payment</button><button class="btn" onclick="remind(${d.c.id})">Send reminder</button></div>`:''}</div>`).join('');
 $('#trucks').innerHTML=S.trucks.map(t=>{const tr=S.trips.filter(x=>x.tid==t.id),inc=sum(tr,'amt'),ex=sum(S.exps.filter(x=>x.tid==t.id),'amt'),tn=sum(tr,'tons'),p=inc-ex;return`<div class="card"><h3>${t.n} <span class="muted">(${t.cap} t)</span></h3><div class="big ${p<0?'late':'ok'}">${F(p)}</div><span class="muted">Income ${F(inc)} · Costs ${F(ex)} · ${tn} t moved${tn?' · '+F(p/tn)+' per ton':''}</span></div>`}).join('');
-$('#set').innerHTML=`<div class="card"><h3>Material rate per ton</h3>${S.materials.map((m,i)=>`<label>${m.n}</label><input type="number" value="${m.r}" onchange="set(S.materials,${i},'r',this.value,1)">`).join('')}</div>
+$('#set').innerHTML=`<div class="card"><h3>Add a truck</h3><div class="row"><input id="nt" placeholder="Name or number"><input id="nc" type="number" inputmode="decimal" placeholder="Limit in tons"></div><button class="btn alt" onclick="addTruck()">Add truck</button></div>
+<div class="card"><h3>Add a material</h3><div class="row"><input id="nm" placeholder="Material name"><input id="nr" type="number" inputmode="decimal" placeholder="Rate per ton"></div><button class="btn alt" onclick="addMat()">Add material</button></div>
+<div class="card"><h3>Add a customer</h3><div class="row"><input id="cn" placeholder="Customer name"><input id="cp" type="tel" placeholder="WhatsApp number with 91"></div><button class="btn alt" onclick="addCust()">Add customer</button></div>
+<div class="card"><h3>Material rate per ton</h3>${S.materials.map((m,i)=>`<label>${m.n}</label><input type="number" value="${m.r}" onchange="set(S.materials,${i},'r',this.value,1)">`).join('')}</div>
 <div class="card"><h3>Distance band fares (per trip)</h3>${S.bands.map((b,i)=>`<div class="row"><div><label>Up to km</label><input type="number" value="${b.upTo}" onchange="set(S.bands,${i},'upTo',this.value,1)"></div><div><label>Fare</label><input type="number" value="${b.fare}" onchange="set(S.bands,${i},'fare',this.value,1)"></div></div>`).join('')}</div>
-<div class="card"><h3>Customers</h3>${S.customers.map((c,i)=>`<label>${c.n}</label><select onchange="set(S.customers,${i},'method',this.value)"><option value="band" ${c.method=='band'?'selected':''}>Distance band fare</option><option value="tonkm" ${c.method=='tonkm'?'selected':''}>Per ton per km</option></select><div class="row"><input type="number" placeholder="Rate per ton per km" value="${c.tk||''}" onchange="set(S.customers,${i},'tk',this.value,1)"><input type="tel" placeholder="WhatsApp number with 91" value="${c.ph}" onchange="set(S.customers,${i},'ph',this.value)"></div>`).join('')}</div>`;slip()}
+<div class="card"><h3>Customers</h3>${S.customers.map((c,i)=>`<label>${c.n}</label><select onchange="set(S.customers,${i},'method',this.value)"><option value="band" ${c.method=='band'?'selected':''}>Distance band fare</option><option value="tonkm" ${c.method=='tonkm'?'selected':''}>Per ton per km</option></select><div class="row"><input type="number" placeholder="Rate per ton per km" value="${c.tk||''}" onchange="set(S.customers,${i},'tk',this.value,1)"><input type="tel" placeholder="WhatsApp number with 91" value="${c.ph}" onchange="set(S.customers,${i},'ph',this.value)"></div>`).join('')}</div>`;if(!$('#recent').innerHTML)$('#recent').innerHTML='<p class="muted">No trips yet.</p>';if(!$('#dues').innerHTML)$('#dues').innerHTML='<p class="muted">Add your customers in Settings, then log trips.</p>';if(!$('#trucks').innerHTML)$('#trucks').innerHTML='<p class="muted">Add your trucks in Settings.</p>';slip()}
+function addTruck(){const n=$('#nt').value.trim(),c=+$('#nc').value;if(n&&c>0){S.trucks.push({id:Date.now(),n,cap:c});save();fill();render()}}
+function addMat(){const n=$('#nm').value.trim(),r=+$('#nr').value;if(n&&r>0){S.materials.push({n,r});save();fill();render()}}
+function addCust(){const n=$('#cn').value.trim();if(n){S.customers.push({id:Date.now(),n,ph:$('#cp').value.trim(),method:'band',tk:0});save();fill();render()}}
 function fill(){$('#cu').innerHTML=opt(S.customers,'id','n');$('#tr').innerHTML=opt(S.trucks,'id','n');$('#et').innerHTML=opt(S.trucks,'id','n');$('#ma').innerHTML=opt(S.materials,'n','n')}
 ['cu','tr','ma','tn','km','fo'].forEach(i=>$('#'+i).addEventListener('input',slip));
-$('#save').onclick=()=>{const x=calc();if(!(x.tons>0)){$('#ms').textContent='Enter the weight in tons first.';return}
+$('#save').onclick=()=>{if(!need()){$('#ms').textContent='Add a truck, a customer and a material in Settings first.';return}const x=calc();if(!(x.tons>0)){$('#ms').textContent='Enter the weight in tons first.';return}
 S.trips.push({d:Date.now(),cid:x.c.id,tid:x.t.id,mat:x.m.n,tons:x.tons,km:x.km,fare:x.f,amt:x.amt});save();['tn','km','fo'].forEach(i=>$('#'+i).value='');$('#ms').textContent='Trip saved. '+x.c.n+' now owes '+F(dues().find(d=>d.c.id==x.c.id).bal)+'.';render()};
 $('#addx').onclick=()=>{const a=+$('#ea').value;if(a>0){S.exps.push({d:Date.now(),tid:+$('#et').value,type:$('#ek').value,amt:a});$('#ea').value='';save();render()}};
 $('#sendfb').onclick=()=>window.open('https://wa.me/?text='+encodeURIComponent('Tipper Ledger feedback: '+$('#fb').value),'_blank');
-$('#reset').onclick=()=>{if(confirm('Replace everything with sample data?')){S=seed();save();fill();render()}};
+$('#reset').onclick=()=>{if(confirm('Delete everything saved on this phone?')){S=seed();save();fill();render()}};
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button,.tab').forEach(e=>e.classList.remove('on'));b.classList.add('on');$('#t-'+b.dataset.t).classList.add('on');scrollTo(0,0)});
 fill();render();
 </script></body></html>
