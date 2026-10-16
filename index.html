@@ -47,6 +47,7 @@ h2{margin:6px 0 0}.note{font-size:14px;color:#5b6a72;margin-top:18px}
 <div class="seg"><button type="button" id="kx" class="on">Expense (spent)</button><button type="button" id="kr">Income (earned)</button></div>
 <label for="ev">Vehicle</label><select id="ev"></select>
 <div id="tw"><label for="ek">Type</label><select id="ek"></select></div>
+<div id="sw" style="display:none"><label for="es">Loaded from</label><select id="es"><option value="">Not recorded</option><option>Crusher</option><option>Quarry</option><option>Yard</option><option>Other</option></select><input id="ep" list="dl" style="margin-top:8px" placeholder="Name of the place (optional)"><datalist id="dl"></datalist></div>
 <label for="ea">Amount (₹)</label><input id="ea" type="number" inputmode="decimal" min="0">
 <label for="ed">Date</label><input id="ed" type="date">
 <label for="en">Note (optional)</label><input id="en" placeholder="Example: front tyre, or load to Thrissur">
@@ -65,7 +66,7 @@ h2{margin:6px 0 0}.note{font-size:14px;color:#5b6a72;margin-top:18px}
 <script>
 const KEY='vehicle-expenses-v1',$=s=>document.querySelector(s),day=864e5;
 const F=n=>(n<0?'-':'')+'₹'+Math.round(Math.abs(n)).toLocaleString('en-IN');
-const TYPES=['Diesel','Repair','Service','Tyre','Driver pay','Insurance / tax','Police fine','Other'];
+const TYPES=['Diesel','Repair','Service','Tyre','Driver pay','Material - crusher','Material - quarry','Insurance / tax','Police fine','Other'];
 let S;try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}if(!S)S={vehicles:[],exps:[]};S.revs=S.revs||[];
 let kind='x',editing=null,cmode='m';
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -73,11 +74,11 @@ const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}},sum=
 const today=()=>new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
 const all=()=>[...S.exps.map(e=>({...e,k:'x'})),...S.revs.map(e=>({...e,k:'r',type:'Income'}))].sort((a,b)=>b.d-a.d);
 const bars=(r,sign)=>{const m=Math.max(1,...r.map(x=>Math.abs(x.v)));return r.length?r.map(x=>`<div class="hb"><span>${x.l}</span><b style="width:${Math.max(3,Math.abs(x.v)/m*100)}%;${sign?'background:'+(x.v<0?'var(--bad)':'var(--ok)'):''}"></b><span>${F(x.v)}</span></div>`).join(''):'<span class="muted">Nothing yet.</span>'};
-const row=(e,del)=>`<div class="card"><h3>${esc(vn(e.vid))} · <span class="${e.k=='r'?'ok':''}">${e.k=='r'?'+':'-'}${F(e.amt)}</span></h3><span class="muted">${D(e.d)} · ${esc(e.type)}${e.note?' · '+esc(e.note):''}</span>${del?`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="btn alt" style="margin-top:8px" onclick="edit('${e.k}',${e.id})">Edit</button><button class="btn alt" style="margin-top:8px" onclick="del('${e.k}',${e.id})">Delete</button></div>`:''}</div>`;
+const row=(e,del)=>`<div class="card"><h3>${esc(vn(e.vid))} · <span class="${e.k=='r'?'ok':''}">${e.k=='r'?'+':'-'}${F(e.amt)}</span></h3><span class="muted">${D(e.d)} · ${esc(e.type)}${e.src?' · from '+esc(e.src)+(e.sn?' ('+esc(e.sn)+')':''):''}${e.note?' · '+esc(e.note):''}</span>${del?`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="btn alt" style="margin-top:8px" onclick="edit('${e.k}',${e.id})">Edit</button><button class="btn alt" style="margin-top:8px" onclick="del('${e.k}',${e.id})">Delete</button></div>`:''}</div>`;
 function edit(k,id){const e=(k=='x'?S.exps:S.revs).find(x=>x.id==id);if(!e)return;editing={k,id};setKind(k);$('#kx').disabled=$('#kr').disabled=true;
 document.querySelectorAll('nav button,.tab').forEach(x=>x.classList.remove('on'));document.querySelector('nav [data-t=add]').classList.add('on');$('#t-add').classList.add('on');
 $('#ah').textContent='Edit entry';$('#save').textContent='Save changes';$('#cancel').style.display='';
-$('#ev').value=e.vid;if(k=='x')$('#ek').value=e.type;$('#ea').value=e.amt;$('#ed').value=new Date(e.d-new Date(e.d).getTimezoneOffset()*6e4).toISOString().slice(0,10);$('#en').value=e.note||'';scrollTo(0,0)}
+$('#ev').value=e.vid;if(k=='x')$('#ek').value=e.type;$('#ea').value=e.amt;$('#ed').value=new Date(e.d-new Date(e.d).getTimezoneOffset()*6e4).toISOString().slice(0,10);$('#en').value=e.note||'';$('#es').value=e.src||'';$('#ep').value=e.sn||'';updSrc();scrollTo(0,0)}
 function endEdit(){editing=null;$('#ah').textContent='Add an entry';$('#cancel').style.display='none';$('#kx').disabled=$('#kr').disabled=false;$('#save').textContent=kind=='x'?'Save expense':'Save income'}
 function del(k,id){if(confirm('Delete this entry?')){if(k=='x')S.exps=S.exps.filter(e=>e.id!=id);else S.revs=S.revs.filter(e=>e.id!=id);save();render()}}
 const tot=(vid,from)=>{const f=e=>e.d>=from&&(!vid||e.vid==vid),i=sum(S.revs.filter(f)),s=sum(S.exps.filter(f));return{i,s,p:i-s}};
@@ -85,11 +86,19 @@ const vpair=from=>{const R=S.vehicles.map(v=>({n:v.n,...tot(v.id,from)})),m=Math
 function periods(){const now=new Date();if(cmode=='y')return[...Array(3)].map((_,i)=>{const y=now.getFullYear()-2+i;return{s:new Date(y,0,1).getTime(),e:new Date(y+1,0,1).getTime(),l:String(y),t:String(y)}});if(cmode=='m')return[...Array(6)].map((_,i)=>{const d=new Date(now.getFullYear(),now.getMonth()-5+i,1),l=d.toLocaleDateString('en-IN',{month:'short'});return{s:d.getTime(),e:new Date(d.getFullYear(),d.getMonth()+1,1).getTime(),l,t:l}});
 const mon=new Date(now.getFullYear(),now.getMonth(),now.getDate());mon.setDate(mon.getDate()-(mon.getDay()+6)%7);
 return[...Array(8)].map((_,i)=>{const s=new Date(mon);s.setDate(s.getDate()-7*(7-i));const e=new Date(s);e.setDate(e.getDate()+7);const m=s.toLocaleDateString('en-IN',{month:'short'});return{s:s.getTime(),e:e.getTime(),l:s.getDate()+'<br>'+m,t:s.getDate()+' '+m}})}
+const srcOn=()=>kind=='r'||/^Material/.test($('#ek').value);
+function updSrc(){$('#sw').style.display=srcOn()?'':'none'}
+function srcTable(f){const g={},get=e=>{const k=(e.src||'Not recorded')+(e.sn?' - '+e.sn:'');return g[k]=g[k]||{l:0,i:0,c:0}};
+S.revs.filter(e=>!f||e.vid==f).forEach(e=>{const o=get(e);o.l++;o.i+=e.amt});
+S.exps.filter(e=>(!f||e.vid==f)&&/^Material/.test(e.type)).forEach(e=>{get(e).c+=e.amt});
+const R=Object.entries(g).sort((a,b)=>b[1].i+b[1].c-a[1].i-a[1].c),cs='grid-template-columns:1fr 44px 78px 78px',r='text-align:right';
+return R.length?`<div class="hb" style="${cs};margin:6px 0"><span></span><span class="muted">Loads</span><span class="muted" style="${r}">Earned</span><span class="muted">Material</span></div>`+R.map(([k,o])=>`<div class="hb" style="${cs};margin:6px 0"><span style="white-space:normal">${esc(k)}</span><span style="text-align:left">${o.l}</span><span class="ok" style="${r}">${F(o.i)}</span><span>${F(o.c)}</span></div>`).join(''):'<span class="muted">Nothing yet.</span>'}
 function chart(){const f=$('#cf').value,M=periods().map(m=>{const g=e=>e.d>=m.s&&e.d<m.e&&(!f||e.vid==f);return{...m,i:sum(S.revs.filter(g)),x:sum(S.exps.filter(g))}}),mx=Math.max(1,...M.flatMap(m=>[m.i,m.x])),E=S.exps.filter(e=>!f||e.vid==f),bt=TYPES.map(t=>({l:t,v:sum(E.filter(e=>e.type==t))})).filter(x=>x.v>0).sort((a,b)=>b.v-a.v);
 $('#chart').innerHTML=`<div class="card"><h3>Earned and spent, ${cmode=='m'?'last 6 months':cmode=='y'?'last 3 years':'last 8 weeks'}</h3><div class="cols">${M.map(m=>`<div class="col"><div class="pair"><i style="height:${m.i/mx*100}%;background:var(--ok)"></i><i style="height:${m.x/mx*100}%;background:var(--slate)"></i></div>${m.l}</div>`).join('')}</div><div class="legend"><span style="--c:var(--ok)">Earned</span><span style="--c:var(--slate)">Spent</span></div></div>
 <div class="card"><h3>${cmode=='m'?'Month by month':cmode=='y'?'Year by year':'Week by week (weeks start Monday)'}</h3><div class="hb" style="grid-template-columns:${cmode=='m'?'50px':'64px'} 1fr 1fr;margin:6px 0"><span></span><span class="muted" style="text-align:left">Earned</span><span class="muted">Spent</span></div>${M.map(m=>`<div class="hb" style="grid-template-columns:${cmode=='m'?'50px':'64px'} 1fr 1fr;margin:6px 0"><span>${m.t}</span><span class="ok" style="text-align:left">${F(m.i)}</span><span>${F(m.x)}</span></div>`).join('')}</div>
-<div class="card"><h3>Spent, by type (all time)</h3>${bars(bt)}</div>`}
-function fill(){const o=S.vehicles.map(v=>`<option value="${v.id}">${esc(v.n)}</option>`).join(''),cur=$('#hf').value,cv=$('#ev').value,cc=$('#cf').value;$('#ev').innerHTML=o;$('#ev').value=cv;$('#hf').innerHTML='<option value="">All vehicles</option>'+o;$('#hf').value=cur;$('#cf').innerHTML='<option value="">All vehicles</option>'+o;$('#cf').value=cc;$('#ek').innerHTML=TYPES.map(t=>`<option>${t}</option>`).join('')}
+<div class="card"><h3>Spent, by type (all time)</h3>${bars(bt)}</div>
+<div class="card"><h3>Where loads came from</h3>${srcTable(f)}</div>`}
+function fill(){const o=S.vehicles.map(v=>`<option value="${v.id}">${esc(v.n)}</option>`).join(''),cur=$('#hf').value,cv=$('#ev').value,cc=$('#cf').value;$('#ev').innerHTML=o;$('#ev').value=cv;$('#hf').innerHTML='<option value="">All vehicles</option>'+o;$('#hf').value=cur;$('#dl').innerHTML=[...new Set([...S.exps,...S.revs].map(e=>e.sn).filter(Boolean))].map(n=>`<option value="${esc(n)}">`).join('');$('#cf').innerHTML='<option value="">All vehicles</option>'+o;$('#cf').value=cc;$('#ek').innerHTML=TYPES.map(t=>`<option>${t}</option>`).join('')}
 function hist(){const f=$('#hf').value,L=all().filter(e=>!f||e.vid==f),t=tot(f,0);$('#hist').innerHTML=`<div class="net"><span>${f?esc(vn(f)):'All vehicles'}: left after costs</span><div class="big">${F(t.p)}</div><span>Earned ${F(t.i)} · Spent ${F(t.s)}</span></div>`+(L.map(e=>row(e,1)).join('')||'<p class="muted">No entries yet.</p>')}
 function render(){const from=Date.now()-30*day,t=tot('',from),ty=tot('',new Date(new Date().getFullYear(),0,1).getTime()),E=S.exps.filter(e=>e.d>=from);
 const bv=S.vehicles.map(v=>({l:v.n,v:tot(v.id,from).p})).sort((a,b)=>b.v-a.v),bt=TYPES.map(x=>({l:x,v:sum(E.filter(e=>e.type==x))})).filter(x=>x.v>0).sort((a,b)=>b.v-a.v);
@@ -99,14 +108,14 @@ $('#home').innerHTML=(S.vehicles.length?'':'<div class="warn">Start here: open V
 <div class="card"><h3>Latest entries</h3>${all().slice(0,5).map(e=>row(e)).join('')||'<span class="muted">No entries yet.</span>'}</div>`;
 $('#veh').innerHTML=S.vehicles.map(v=>{const x=tot(v.id,from);return`<div class="card"><h3>${esc(v.n)}</h3><div class="big ${x.p<0?'bad':'ok'}">${F(x.p)}</div><span class="muted">Last 30 days: earned ${F(x.i)} · spent ${F(x.s)}</span></div>`}).join('')||'<p class="muted">No vehicles yet.</p>';
 fill();hist();chart()}
-function setKind(k){kind=k;$('#kx').classList.toggle('on',k=='x');$('#kr').classList.toggle('on',k=='r');$('#tw').style.display=k=='x'?'':'none';$('#save').textContent=k=='x'?'Save expense':'Save income';$('#ms').textContent=''}
+function setKind(k){kind=k;$('#kx').classList.toggle('on',k=='x');$('#kr').classList.toggle('on',k=='r');$('#tw').style.display=k=='x'?'':'none';$('#save').textContent=k=='x'?'Save expense':'Save income';$('#ms').textContent='';updSrc()}
 $('#kx').onclick=()=>setKind('x');$('#kr').onclick=()=>setKind('r');
 $('#save').onclick=()=>{const a=+$('#ea').value;if(!S.vehicles.length){$('#ms').textContent='Add a vehicle first.';return}if(!(a>0)){$('#ms').textContent='Enter the amount.';return}
-const b={id:Date.now(),d:new Date(($('#ed').value||today())+'T12:00:00').getTime(),vid:$('#ev').value,amt:a,note:$('#en').value.trim()};
-if(editing){const L=editing.k=='x'?S.exps:S.revs,t=L.find(e=>e.id==editing.id);if(t){Object.assign(t,{d:b.d,vid:b.vid,amt:b.amt,note:b.note});if(editing.k=='x')t.type=$('#ek').value}}else if(kind=='x')S.exps.push({...b,type:$('#ek').value});else S.revs.push(b);
-save();$('#ea').value='';$('#en').value='';const w=!!editing;$('#ms').textContent=(w?'Updated ':'Saved ')+(kind=='x'?'expense ':'income ')+F(a)+' for '+vn(b.vid)+'.';endEdit();render();if(w)document.querySelector('nav [data-t=hist]').click()};
+const b={id:Date.now(),d:new Date(($('#ed').value||today())+'T12:00:00').getTime(),vid:$('#ev').value,amt:a,note:$('#en').value.trim(),...(srcOn()?{src:$('#es').value,sn:$('#ep').value.trim()}:{})};
+if(editing){const L=editing.k=='x'?S.exps:S.revs,t=L.find(e=>e.id==editing.id);if(t){Object.assign(t,{d:b.d,vid:b.vid,amt:b.amt,note:b.note,src:b.src,sn:b.sn});if(editing.k=='x')t.type=$('#ek').value}}else if(kind=='x')S.exps.push({...b,type:$('#ek').value});else S.revs.push(b);
+save();$('#ea').value='';$('#en').value='';$('#ep').value='';$('#es').value='';const w=!!editing;$('#ms').textContent=(w?'Updated ':'Saved ')+(kind=='x'?'expense ':'income ')+F(a)+' for '+vn(b.vid)+'.';endEdit();render();if(w)document.querySelector('nav [data-t=hist]').click()};
 $('#addv').onclick=()=>{const n=$('#vn').value.trim();if(n){S.vehicles.push({id:Date.now(),n});$('#vn').value='';save();render()}};
-$('#hf').onchange=hist;$('#cf').onchange=chart;[['bm','m'],['bw','w'],['by','y']].forEach(([id,m])=>$('#'+id).onclick=()=>{cmode=m;['bm','bw','by'].forEach(x=>$('#'+x).classList.toggle('on',x==id));chart()});$('#cancel').onclick=()=>{endEdit();$('#ea').value='';$('#en').value='';$('#ms').textContent=''};
+$('#hf').onchange=hist;$('#cf').onchange=chart;$('#ek').onchange=updSrc;[['bm','m'],['bw','w'],['by','y']].forEach(([id,m])=>$('#'+id).onclick=()=>{cmode=m;['bm','bw','by'].forEach(x=>$('#'+x).classList.toggle('on',x==id));chart()});$('#cancel').onclick=()=>{endEdit();$('#ea').value='';$('#en').value='';$('#ms').textContent=''};
 $('#sendfb').onclick=()=>window.open('https://wa.me/?text='+encodeURIComponent('Vehicle Money feedback: '+$('#fb').value),'_blank');
 $('#reset').onclick=()=>{if(confirm('Delete everything saved on this phone?')){S={vehicles:[],exps:[],revs:[]};save();render()}};
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button,.tab').forEach(e=>e.classList.remove('on'));b.classList.add('on');$('#t-'+b.dataset.t).classList.add('on');scrollTo(0,0)});
