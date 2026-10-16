@@ -30,8 +30,8 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:3px solid v
 .hb{display:grid;grid-template-columns:100px 1fr 96px;gap:8px;align-items:center;margin:8px 0;font-size:15px}
 .hb b{display:block;height:16px;border-radius:3px;background:var(--slate)}
 .hb span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.hb span:last-child{text-align:right;font-variant-numeric:tabular-nums}
-nav{position:fixed;bottom:0;left:0;right:0;display:grid;grid-template-columns:repeat(5,1fr);background:var(--ink)}
-nav button{border:0;border-radius:0;background:none;color:#fff;min-height:64px;font-weight:700}
+nav{position:fixed;bottom:0;left:0;right:0;display:grid;grid-template-columns:repeat(6,1fr);background:var(--ink)}
+nav button{border:0;border-radius:0;background:none;color:#fff;min-height:64px;font-weight:700;font-size:14px;padding:4px}
 nav button.on{background:var(--sun);color:var(--ink)}
 h2{margin:6px 0 0}.note{font-size:14px;color:#5b6a72;margin-top:18px}
 .ms{color:var(--ok);font-weight:700;margin-top:8px;min-height:24px}
@@ -39,9 +39,12 @@ h2{margin:6px 0 0}.note{font-size:14px;color:#5b6a72;margin-top:18px}
 .pair{display:flex;align-items:flex-end;justify-content:center;gap:3px;height:120px}.pair i{display:block;width:45%;border-radius:3px 3px 0 0;min-height:2px}
 .legend{display:flex;gap:14px;font-size:14px;margin-top:8px}.legend span:before{content:"";display:inline-block;width:12px;height:12px;border-radius:2px;margin-right:6px;vertical-align:-1px;background:var(--c)}
 .tag{background:var(--sun);color:var(--ink);font-size:12px;font-weight:700;padding:2px 8px;border-radius:10px;margin-left:8px;vertical-align:3px}
+#md{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:20;align-items:center;justify-content:center;padding:16px}
+#md .card{max-width:420px;width:100%;margin:0;max-height:90vh;overflow:auto}
 </style></head><body>
 <header><b>Vehicle Money</b><span class="tag">DEMO</span><small>Draft demo version. Your entries stay on this phone.</small></header>
 <main>
+<div id="sf" class="warn" style="display:none;margin:0 0 10px;border-color:var(--bad)">This browser is not saving your entries (private window or blocked storage). Open the app in a normal window, and download a backup often.</div>
 <section class="tab on" id="t-home"><h2>Last 30 days at a glance</h2><div id="home"></div></section>
 <section class="tab" id="t-add"><h2 id="ah">Add an entry</h2>
 <div class="seg"><button type="button" id="kx" class="on">Expense (spent)</button><button type="button" id="kr">Income (earned)</button></div>
@@ -55,22 +58,24 @@ h2{margin:6px 0 0}.note{font-size:14px;color:#5b6a72;margin-top:18px}
 <section class="tab" id="t-hist"><h2>All entries</h2>
 <label for="hf">Show</label><select id="hf"></select><div id="hist"></div></section>
 <section class="tab" id="t-chart"><h2>Charts</h2><label for="cf">Vehicle</label><select id="cf"></select><div class="seg"><button type="button" id="bm" class="on">By month</button><button type="button" id="bw">By week</button><button type="button" id="by">By year</button></div><div id="chart"></div></section>
+<section class="tab" id="t-led"><div id="led"></div></section>
 <section class="tab" id="t-veh"><h2>Vehicles</h2><div id="veh"></div>
 <div class="card"><h3>Add a vehicle</h3><input id="vn" placeholder="Name or number"><button class="btn alt" id="addv">Add vehicle</button></div>
-<div class="card"><h3>Backup your data</h3><span class="muted">Save a copy to this phone, or restore one.</span><button class="btn alt" id="exp" type="button">Download backup</button><label for="imp">Restore from a backup file</label><input id="imp" type="file" accept="application/json,.json"></div>
+<div class="card"><h3>Backup your data</h3><span class="muted">Save a copy to this phone, or restore one. On an iPhone, keep the app installed on the Home Screen, because Safari can clear saved data from websites that are not opened for a week.</span><button class="btn alt" id="exp" type="button">Download backup</button><label for="imp">Restore from a backup file</label><input id="imp" type="file" accept="application/json,.json"></div>
 <div class="card"><h3>What should change?</h3><textarea id="fb" rows="3" placeholder="Tell us what is missing or confusing"></textarea><button class="btn" id="sendfb">Send on WhatsApp</button></div>
 <button class="btn alt" id="reset">Clear everything on this phone</button>
 <p class="note">This is a draft demo version for feedback. Add your vehicles first, then log what each one spends and earns.</p></section>
 </main>
-<nav><button data-t="home" class="on">Home</button><button data-t="add">Add</button><button data-t="hist">History</button><button data-t="chart">Charts</button><button data-t="veh">Vehicles</button></nav>
+<div id="md" role="dialog" aria-modal="true"><div class="card"><h3 id="mt"></h3><div id="mf"></div><div style="display:flex;gap:8px"><button class="btn alt" id="mc" type="button" style="flex:1">Cancel</button><button class="btn" id="mk" type="button" style="flex:1">OK</button></div></div></div>
+<nav><button data-t="home" class="on">Home</button><button data-t="add">Add</button><button data-t="hist">History</button><button data-t="chart">Charts</button><button data-t="led">Ledger</button><button data-t="veh">Vehicles</button></nav>
 <script>
 const KEY='vehicle-expenses-v1',$=s=>document.querySelector(s),day=864e5;
 const F=n=>(n<0?'-':'')+'₹'+Math.round(Math.abs(n)).toLocaleString('en-IN');
 const TYPES=['Diesel','Repair','Service','Tyre','Driver pay','Material - crusher','Material - quarry','Insurance / tax','Police fine','Other'];
-let S;try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}if(!S)S={vehicles:[],exps:[]};S.revs=S.revs||[];
+let S;try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}if(!S)S={vehicles:[],exps:[]};S.revs=S.revs||[];S.cust=S.cust||[];S.led=S.led||[];
 let kind='x',editing=null,cmode='m';
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}},sum=a=>a.reduce((s,x)=>s+x.amt,0),vn=id=>(S.vehicles.find(v=>v.id==id)||{n:'Removed vehicle'}).n,D=d=>new Date(d).toLocaleDateString('en-IN',{day:'numeric',month:'short'});
+let saveFail=false;const warnSave=()=>{const el=document.getElementById('sf');if(el)el.style.display=saveFail?'block':'none'};const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S));saveFail=false}catch(e){saveFail=true}warnSave()},sum=a=>a.reduce((s,x)=>s+x.amt,0),vn=id=>(S.vehicles.find(v=>v.id==id)||{n:'Removed vehicle'}).n,D=d=>new Date(d).toLocaleDateString('en-IN',{day:'numeric',month:'short'});
 const today=()=>new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
 const all=()=>[...S.exps.map(e=>({...e,k:'x'})),...S.revs.map(e=>({...e,k:'r',type:'Income'}))].sort((a,b)=>b.d-a.d);
 const bars=(r,sign)=>{const m=Math.max(1,...r.map(x=>Math.abs(x.v)));return r.length?r.map(x=>`<div class="hb"><span>${x.l}</span><b style="width:${Math.max(3,Math.abs(x.v)/m*100)}%;${sign?'background:'+(x.v<0?'var(--bad)':'var(--ok)'):''}"></b><span>${F(x.v)}</span></div>`).join(''):'<span class="muted">Nothing yet.</span>'};
@@ -80,7 +85,41 @@ document.querySelectorAll('nav button,.tab').forEach(x=>x.classList.remove('on')
 $('#ah').textContent='Edit entry';$('#save').textContent='Save changes';$('#cancel').style.display='';
 $('#ev').value=e.vid;if(k=='x')$('#ek').value=e.type;$('#ea').value=e.amt;$('#ed').value=new Date(e.d-new Date(e.d).getTimezoneOffset()*6e4).toISOString().slice(0,10);$('#en').value=e.note||'';$('#es').value=e.src||'';$('#ep').value=e.sn||'';updSrc();scrollTo(0,0)}
 function endEdit(){editing=null;$('#ah').textContent='Add an entry';$('#cancel').style.display='none';$('#kx').disabled=$('#kr').disabled=false;$('#save').textContent=kind=='x'?'Save expense':'Save income'}
-function del(k,id){if(confirm('Delete this entry?')){if(k=='x')S.exps=S.exps.filter(e=>e.id!=id);else S.revs=S.revs.filter(e=>e.id!=id);save();render()}}
+async function renV(id){const v=S.vehicles.find(x=>x.id==id);if(!v)return;const r=await ask('Edit vehicle',[{l:'Vehicle name or number',v:v.n}],'Save');if(r&&r[0].trim()){v.n=r[0].trim();save();render()}}
+async function delV(id){const v=S.vehicles.find(x=>x.id==id);if(!v)return;const k=S.exps.filter(e=>e.vid==id).length+S.revs.filter(e=>e.vid==id).length;
+if(await yes(k?`Delete ${v.n} and its ${k} entries? This cannot be undone.`:`Delete ${v.n}?`)){S.vehicles=S.vehicles.filter(x=>x.id!=id);S.exps=S.exps.filter(e=>e.vid!=id);S.revs=S.revs.filter(e=>e.vid!=id);save();render()}}
+let lc=null,le=null,lk='c';
+const dstr=t=>new Date(t-new Date(t).getTimezoneOffset()*6e4).toISOString().slice(0,10),bal=cid=>S.led.filter(x=>x.cid==cid).reduce((s,x)=>s+(x.k=='c'?x.amt:-x.amt),0),cname=id=>(S.cust.find(c=>c.id==id)||{n:'Removed customer'}).n;
+const cph=s=>String(s||'').replace(/[^\d+\-\s()]/g,'').trim(),phl=c=>c.ph?`<a href="tel:${esc(c.ph.replace(/[^\d+]/g,''))}" style="color:var(--slate);font-weight:700">${esc(c.ph)}</a>`:'<span class="muted">No phone number</span>';
+function custCard(){if(!S.cust.length)return'';const B=S.cust.map(c=>({n:c.n,b:bal(c.id)})).filter(x=>x.b>0).sort((a,b)=>b.b-a.b),t=B.reduce((s,x)=>s+x.b,0);
+return`<div class="card"><h3>Customers owe you</h3><div class="big ${t>0?'bad':'ok'}">${F(t)}</div>${B.slice(0,3).map(x=>`<div class="hb" style="grid-template-columns:1fr 96px;margin:6px 0"><span>${esc(x.n)}</span><span>${F(x.b)}</span></div>`).join('')||'<span class="muted">Nobody owes you anything.</span>'}</div>`}
+function ledger(){const el=$('#led');if(lc&&!S.cust.find(c=>c.id==lc)){lc=null;le=null}
+if(!lc){const owed=S.cust.reduce((s,c)=>s+Math.max(bal(c.id),0),0);
+el.innerHTML=`<h2>Customer ledger</h2><div class="net"><span>Customers owe you</span><div class="big">${F(owed)}</div></div>`+(S.cust.map(c=>{const b=bal(c.id),L=S.led.filter(x=>x.cid==c.id),last=L.length?D(Math.max(...L.map(x=>x.d))):'none yet';return`<div class="card"><h3>${esc(c.n)}</h3><div style="margin-bottom:4px">${phl(c)}</div><div class="big ${b>0?'bad':'ok'}">${F(Math.abs(b))}</div><span class="muted">${b>0?'owes you':b<0?'paid in advance':'settled'} · last entry: ${last}</span><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="btn alt" style="margin-top:8px" onclick="openC(${c.id})">Open ledger</button><button class="btn alt" style="margin-top:8px" onclick="renC(${c.id})">Edit details</button></div>${b>0?`<button class="btn" style="margin-top:8px" onclick="remind(${c.id})">Remind on WhatsApp</button>`:''}</div>`}).join('')||'<p class="muted">No customers yet.</p>')+`<div class="card"><h3>Add a customer</h3><input id="cnm" placeholder="Customer name"><input id="cph" type="tel" inputmode="tel" style="margin-top:8px" placeholder="Phone number (optional)"><button class="btn alt" id="addc" type="button">Add customer</button></div>`;
+$('#addc').onclick=()=>{const n=$('#cnm').value.trim();if(n){S.cust.push({id:Date.now(),n,ph:cph($('#cph').value)});save();render()}};return}
+const c=S.cust.find(x=>x.id==lc),b=bal(lc);let run=0;
+const rows=S.led.filter(x=>x.cid==lc).sort((a,b)=>a.d-b.d||a.id-b.id).map(x=>({...x,r:run+=(x.k=='c'?x.amt:-x.amt)})).reverse();
+el.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px"><button class="btn alt" style="margin:0" onclick="openC(null)">← All customers</button><button class="btn alt" style="margin:0" onclick="renC()">Edit details</button></div><h2>${esc(c.n)}</h2><div style="margin-top:4px">${phl(c)}</div><div class="net"><span>${b>0?'Owes you':b<0?'Paid in advance':'Settled'}</span><div class="big">${F(Math.abs(b))}</div></div>
+${b>0?`<button class="btn" style="margin:10px 0 0" onclick="remind(${lc})">Remind on WhatsApp</button>`:''}<div class="card"><h3>${le?'Edit entry':'Add entry'}</h3><div class="seg"><button type="button" id="lbc" class="${lk=='c'?'on':''}">Credit given</button><button type="button" id="lbp" class="${lk=='p'?'on':''}">Debit (payment received)</button></div>
+<label for="la">Amount (₹)</label><input id="la" type="number" inputmode="decimal" min="0"><label for="ld">Date</label><input id="ld" type="date" value="${today()}"><label for="lr">Remarks</label><input id="lr" placeholder="Example: 2 loads, cheque no. 123">
+<button class="btn" id="ls" type="button">${le?'Save changes':'Save entry'}</button>${le?'<button class="btn alt" id="lx" type="button">Cancel edit</button>':''}<div class="ms" id="lm" role="status"></div></div>
+<h3 style="margin:16px 0 0">Entries</h3>`+(rows.map(x=>`<div class="card"><h3>${x.k=='c'?'Credit given':'Debit · payment received'} · <span class="${x.k=='c'?'bad':'ok'}">${F(x.amt)}</span></h3><span class="muted">${D(x.d)}${x.note?' · '+esc(x.note):''} · balance after: ${F(x.r)}</span><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="btn alt" style="margin-top:8px" onclick="editL(${x.id})">Edit</button><button class="btn alt" style="margin-top:8px" onclick="delL(${x.id})">Delete</button></div></div>`).join('')||'<p class="muted">No entries yet.</p>')+`<button class="btn alt" onclick="delC()">Delete customer</button>`;
+if(le){const x=S.led.find(y=>y.id==le);if(x){$('#la').value=x.amt;$('#ld').value=dstr(x.d);$('#lr').value=x.note||''}}
+$('#lbc').onclick=()=>{lk='c';$('#lbc').classList.add('on');$('#lbp').classList.remove('on')};$('#lbp').onclick=()=>{lk='p';$('#lbp').classList.add('on');$('#lbc').classList.remove('on')};
+$('#ls').onclick=()=>{const a=+$('#la').value;if(!(a>0)){$('#lm').textContent='Enter the amount.';return}const o={d:new Date(($('#ld').value||today())+'T12:00:00').getTime(),k:lk,amt:a,note:$('#lr').value.trim()};
+if(le){const x=S.led.find(y=>y.id==le);if(x)Object.assign(x,o)}else S.led.push({id:Date.now(),cid:lc,...o});le=null;save();render()};
+if(le)$('#lx').onclick=()=>{le=null;ledger()}}
+const waNum=p=>{const d=String(p||'').replace(/\D/g,'');if(!d)return'';if(String(p).trim().startsWith('+'))return d;if(d.length==10)return'91'+d;if(d.length==11&&d[0]=='0')return'91'+d.slice(1);return d};
+function remind(id){const c=S.cust.find(x=>x.id==id),b=bal(id);if(!c)return;if(b<=0){ask(c.n+' has nothing pending.',[],'OK',true);return}
+const L=S.led.filter(x=>x.cid==id).sort((a,b)=>b.d-a.d||b.id-a.id).slice(0,3).reverse().map(x=>`${D(x.d)}: ${x.k=='c'?'credit':'payment'} ${F(x.amt)}${x.note?' ('+x.note+')':''}`);
+const msg=`Hello ${c.n},\nThis is a gentle reminder that ${F(b)} is pending as of ${D(Date.now())}.\n\nRecent entries:\n${L.join('\n')}\n\nPlease pay when you can. Thank you.`;
+window.open('https://wa.me/'+waNum(c.ph)+'?text='+encodeURIComponent(msg),'_blank')}
+function openC(id){lc=id;le=null;ledger();scrollTo(0,0)}
+function editL(id){const x=S.led.find(y=>y.id==id);if(!x)return;le=id;lk=x.k;ledger();scrollTo(0,0)}
+async function delL(id){if(await yes('Delete this entry?','Delete')){S.led=S.led.filter(x=>x.id!=id);save();render()}}
+async function renC(id){const c=S.cust.find(x=>x.id==(id||lc));if(!c)return;const r=await ask('Edit customer',[{l:'Customer name',v:c.n},{l:'Phone number (leave empty for none)',v:c.ph||'',t:'tel'}],'Save');if(!r)return;if(r[0].trim())c.n=r[0].trim();c.ph=cph(r[1]);save();render()}
+async function delC(){const k=S.led.filter(x=>x.cid==lc).length;if(await yes(k?`Delete ${cname(lc)} and its ${k} entries? This cannot be undone.`:`Delete ${cname(lc)}?`)){S.cust=S.cust.filter(x=>x.id!=lc);S.led=S.led.filter(x=>x.cid!=lc);lc=null;le=null;save();render()}}
+async function del(k,id){if(await yes('Delete this entry?','Delete')){if(k=='x')S.exps=S.exps.filter(e=>e.id!=id);else S.revs=S.revs.filter(e=>e.id!=id);save();render()}}
 const tot=(vid,from)=>{const f=e=>e.d>=from&&(!vid||e.vid==vid),i=sum(S.revs.filter(f)),s=sum(S.exps.filter(f));return{i,s,p:i-s}};
 const vpair=from=>{const R=S.vehicles.map(v=>({n:v.n,...tot(v.id,from)})),m=Math.max(1,...R.flatMap(r=>[r.i,r.s]));return R.length?R.map(r=>`<div style="margin:12px 0"><div style="display:flex;justify-content:space-between;gap:8px"><b>${esc(r.n)}</b><b class="${r.p<0?'bad':'ok'}">${F(r.p)}</b></div><div class="hb" style="grid-template-columns:62px 1fr 84px;margin:4px 0"><span>Earned</span><b style="width:${Math.max(2,r.i/m*100)}%;background:var(--ok)"></b><span>${F(r.i)}</span></div><div class="hb" style="grid-template-columns:62px 1fr 84px;margin:4px 0"><span>Spent</span><b style="width:${Math.max(2,r.s/m*100)}%"></b><span>${F(r.s)}</span></div></div>`).join(''):'<span class="muted">Add your vehicles first.</span>'};
 function periods(){const now=new Date();if(cmode=='y')return[...Array(3)].map((_,i)=>{const y=now.getFullYear()-2+i;return{s:new Date(y,0,1).getTime(),e:new Date(y+1,0,1).getTime(),l:String(y),t:String(y)}});if(cmode=='m')return[...Array(6)].map((_,i)=>{const d=new Date(now.getFullYear(),now.getMonth()-5+i,1),l=d.toLocaleDateString('en-IN',{month:'short'});return{s:d.getTime(),e:new Date(d.getFullYear(),d.getMonth()+1,1).getTime(),l,t:l}});
@@ -98,29 +137,36 @@ $('#chart').innerHTML=`<div class="card"><h3>Earned and spent, ${cmode=='m'?'las
 <div class="card"><h3>${cmode=='m'?'Month by month':cmode=='y'?'Year by year':'Week by week (weeks start Monday)'}</h3><div class="hb" style="grid-template-columns:${cmode=='m'?'50px':'64px'} 1fr 1fr;margin:6px 0"><span></span><span class="muted" style="text-align:left">Earned</span><span class="muted">Spent</span></div>${M.map(m=>`<div class="hb" style="grid-template-columns:${cmode=='m'?'50px':'64px'} 1fr 1fr;margin:6px 0"><span>${m.t}</span><span class="ok" style="text-align:left">${F(m.i)}</span><span>${F(m.x)}</span></div>`).join('')}</div>
 <div class="card"><h3>Spent, by type (all time)</h3>${bars(bt)}</div>
 <div class="card"><h3>Where loads came from</h3>${srcTable(f)}</div>`}
-function fill(){const o=S.vehicles.map(v=>`<option value="${v.id}">${esc(v.n)}</option>`).join(''),cur=$('#hf').value,cv=$('#ev').value,cc=$('#cf').value;$('#ev').innerHTML=o;$('#ev').value=cv;$('#hf').innerHTML='<option value="">All vehicles</option>'+o;$('#hf').value=cur;$('#dl').innerHTML=[...new Set([...S.exps,...S.revs].map(e=>e.sn).filter(Boolean))].map(n=>`<option value="${esc(n)}">`).join('');$('#cf').innerHTML='<option value="">All vehicles</option>'+o;$('#cf').value=cc;$('#ek').innerHTML=TYPES.map(t=>`<option>${t}</option>`).join('')}
+function ask(title,fields,ok,info){return new Promise(res=>{const m=$('#md'),F2=fields||[];$('#mt').textContent=title;
+$('#mf').innerHTML=F2.map((f,i)=>`<label for="mf${i}">${esc(f.l)}</label><input id="mf${i}" type="${f.t||'text'}" value="${esc(f.v||'')}">`).join('');
+$('#mk').textContent=ok||'OK';$('#mc').style.display=info?'none':'';m.style.display='flex';
+const done=v=>{m.style.display='none';res(v)};$('#mk').onclick=()=>done(F2.map((_,i)=>$('#mf'+i).value));$('#mc').onclick=()=>done(null);
+setTimeout(()=>{const f=$('#mf0');if(f)f.focus()},50)})}
+const yes=async(msg,ok)=>(await ask(msg,[],ok||'Yes'))!==null;
+const keep=(el,v)=>{if([...el.options].some(o=>o.value==v))el.value=v};
+function fill(){const o=S.vehicles.map(v=>`<option value="${v.id}">${esc(v.n)}</option>`).join(''),cur=$('#hf').value,cv=$('#ev').value,cc=$('#cf').value;$('#ev').innerHTML=o;keep($('#ev'),cv);$('#hf').innerHTML='<option value="">All vehicles</option>'+o;keep($('#hf'),cur);$('#dl').innerHTML=[...new Set([...S.exps,...S.revs].map(e=>e.sn).filter(Boolean))].map(n=>`<option value="${esc(n)}">`).join('');$('#cf').innerHTML='<option value="">All vehicles</option>'+o;keep($('#cf'),cc);(()=>{const ck=$('#ek').value;$('#ek').innerHTML=TYPES.map(t=>`<option>${t}</option>`).join('');keep($('#ek'),ck)})()}
 function hist(){const f=$('#hf').value,L=all().filter(e=>!f||e.vid==f),t=tot(f,0);$('#hist').innerHTML=`<div class="net"><span>${f?esc(vn(f)):'All vehicles'}: left after costs</span><div class="big">${F(t.p)}</div><span>Earned ${F(t.i)} · Spent ${F(t.s)}</span></div>`+(L.map(e=>row(e,1)).join('')||'<p class="muted">No entries yet.</p>')}
 function render(){const from=Date.now()-30*day,t=tot('',from),ty=tot('',new Date(new Date().getFullYear(),0,1).getTime()),E=S.exps.filter(e=>e.d>=from);
 const bv=S.vehicles.map(v=>({l:v.n,v:tot(v.id,from).p})).sort((a,b)=>b.v-a.v),bt=TYPES.map(x=>({l:x,v:sum(E.filter(e=>e.type==x))})).filter(x=>x.v>0).sort((a,b)=>b.v-a.v);
 $('#home').innerHTML=(S.vehicles.length?'':'<div class="warn">Start here: open Vehicles and add your trucks.</div>')+`<div class="net"><span>Left after costs</span><div class="big">${F(t.p)}</div></div>
 <div class="kpis"><div class="kpi"><span class="muted">Earned</span><div class="big ok">${F(t.i)}</div></div><div class="kpi"><span class="muted">Spent</span><div class="big">${F(t.s)}</div></div></div>
-<div class="card"><h3>This year so far</h3><div class="big ${ty.p<0?'bad':'ok'}">${F(ty.p)}</div><span class="muted">left after costs · earned ${F(ty.i)} · spent ${F(ty.s)}</span></div><div class="card"><h3>Earned and spent, by vehicle</h3>${vpair(from)}</div><div class="card"><h3>Spent, by type</h3>${bars(bt)}</div>
+${custCard()}<div class="card"><h3>This year so far</h3><div class="big ${ty.p<0?'bad':'ok'}">${F(ty.p)}</div><span class="muted">left after costs · earned ${F(ty.i)} · spent ${F(ty.s)}</span></div><div class="card"><h3>Earned and spent, by vehicle</h3>${vpair(from)}</div><div class="card"><h3>Spent, by type</h3>${bars(bt)}</div>
 <div class="card"><h3>Latest entries</h3>${all().slice(0,5).map(e=>row(e)).join('')||'<span class="muted">No entries yet.</span>'}</div>`;
-$('#veh').innerHTML=S.vehicles.map(v=>{const x=tot(v.id,from);return`<div class="card"><h3>${esc(v.n)}</h3><div class="big ${x.p<0?'bad':'ok'}">${F(x.p)}</div><span class="muted">Last 30 days: earned ${F(x.i)} · spent ${F(x.s)}</span></div>`}).join('')||'<p class="muted">No vehicles yet.</p>';
-fill();hist();chart()}
+$('#veh').innerHTML=S.vehicles.map(v=>{const x=tot(v.id,from);return`<div class="card"><h3>${esc(v.n)}</h3><div class="big ${x.p<0?'bad':'ok'}">${F(x.p)}</div><span class="muted">Last 30 days: earned ${F(x.i)} · spent ${F(x.s)}</span><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="btn alt" style="margin-top:8px" onclick="renV(${v.id})">Edit name</button><button class="btn alt" style="margin-top:8px" onclick="delV(${v.id})">Delete</button></div></div>`}).join('')||'<p class="muted">No vehicles yet.</p>';
+fill();hist();chart();ledger();updSrc()}
 function setKind(k){kind=k;$('#kx').classList.toggle('on',k=='x');$('#kr').classList.toggle('on',k=='r');$('#tw').style.display=k=='x'?'':'none';$('#save').textContent=k=='x'?'Save expense':'Save income';$('#ms').textContent='';updSrc()}
 $('#kx').onclick=()=>setKind('x');$('#kr').onclick=()=>setKind('r');
-$('#save').onclick=()=>{const a=+$('#ea').value;if(!S.vehicles.length){$('#ms').textContent='Add a vehicle first.';return}if(!(a>0)){$('#ms').textContent='Enter the amount.';return}
+$('#save').onclick=()=>{const a=+$('#ea').value;if(!S.vehicles.length){$('#ms').textContent='Add a vehicle first.';return}if(!(a>0)){$('#ms').textContent='Enter the amount.';return}if(!S.vehicles.some(v=>v.id==$('#ev').value)){$('#ms').textContent='Choose a vehicle.';return}
 const b={id:Date.now(),d:new Date(($('#ed').value||today())+'T12:00:00').getTime(),vid:$('#ev').value,amt:a,note:$('#en').value.trim(),...(srcOn()?{src:$('#es').value,sn:$('#ep').value.trim()}:{})};
 if(editing){const L=editing.k=='x'?S.exps:S.revs,t=L.find(e=>e.id==editing.id);if(t){Object.assign(t,{d:b.d,vid:b.vid,amt:b.amt,note:b.note,src:b.src,sn:b.sn});if(editing.k=='x')t.type=$('#ek').value}}else if(kind=='x')S.exps.push({...b,type:$('#ek').value});else S.revs.push(b);
 save();$('#ea').value='';$('#en').value='';$('#ep').value='';$('#es').value='';const w=!!editing;$('#ms').textContent=(w?'Updated ':'Saved ')+(kind=='x'?'expense ':'income ')+F(a)+' for '+vn(b.vid)+'.';endEdit();render();if(w)document.querySelector('nav [data-t=hist]').click()};
 $('#addv').onclick=()=>{const n=$('#vn').value.trim();if(n){S.vehicles.push({id:Date.now(),n});$('#vn').value='';save();render()}};
 $('#hf').onchange=hist;$('#cf').onchange=chart;$('#ek').onchange=updSrc;[['bm','m'],['bw','w'],['by','y']].forEach(([id,m])=>$('#'+id).onclick=()=>{cmode=m;['bm','bw','by'].forEach(x=>$('#'+x).classList.toggle('on',x==id));chart()});$('#cancel').onclick=()=>{endEdit();$('#ea').value='';$('#en').value='';$('#ms').textContent=''};
 $('#sendfb').onclick=()=>window.open('https://wa.me/?text='+encodeURIComponent('Vehicle Money feedback: '+$('#fb').value),'_blank');
-$('#reset').onclick=()=>{if(confirm('Delete everything saved on this phone?')){S={vehicles:[],exps:[],revs:[]};save();render()}};
+$('#reset').onclick=async()=>{if(await yes('Delete everything saved on this phone?','Delete all')){S={vehicles:[],exps:[],revs:[],cust:[],led:[]};save();render()}};
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button,.tab').forEach(e=>e.classList.remove('on'));b.classList.add('on');$('#t-'+b.dataset.t).classList.add('on');scrollTo(0,0)});
 $('#exp').onclick=()=>{const b=new Blob([JSON.stringify(S,null,1)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='vehicle-money-backup-'+today()+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
-$('#imp').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!Array.isArray(d.vehicles)||!Array.isArray(d.exps))throw 0;if(confirm('Replace everything on this phone with this backup?')){S={vehicles:d.vehicles,exps:d.exps,revs:Array.isArray(d.revs)?d.revs:[]};save();render()}}catch(x){alert('That file is not a valid backup.')}};r.readAsText(f);e.target.value=''};
+$('#imp').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=async()=>{try{const d=JSON.parse(r.result);if(!Array.isArray(d.vehicles)||!Array.isArray(d.exps))throw 0;if(await yes('Replace everything on this phone with this backup?','Replace')){const A=x=>Array.isArray(x)?x:[],N=x=>x&&Number.isFinite(+x.amt)&&+x.amt>0&&Number.isFinite(+x.d),M=x=>({...x,amt:+x.amt,d:+x.d}),I=x=>x&&x.id!=null&&x.n;S={vehicles:A(d.vehicles).filter(I),exps:A(d.exps).filter(N).map(M),revs:A(d.revs).filter(N).map(M),cust:A(d.cust).filter(I),led:A(d.led).filter(N).map(M)};endEdit();lc=null;le=null;save();render()}}catch(x){ask('That file is not a valid backup.',[],'OK',true)}};r.readAsText(f);e.target.value=''};
 if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
-$('#ed').value=today();render();
+save();$('#ed').value=today();render();
 </script></body></html>
