@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Tipper Ledger - pilot mockup</title>
+<title>Vehicle Money - pilot mockup</title>
 <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root{--ink:#1f2a30;--road:#e9edef;--slate:#3b4a52;--sun:#f2b705;--ok:#2e7d4f;--bad:#b3261e;--paper:#fff;--line:#c9d1d5}
@@ -13,99 +13,98 @@ main{max-width:560px;margin:0 auto;padding:14px}
 label{display:block;font-weight:700;margin:12px 0 4px}
 input,select,textarea,button{font:inherit;width:100%;min-height:48px;padding:8px 12px;border:2px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink)}
 input:focus,select:focus,textarea:focus,button:focus-visible{outline:3px solid var(--sun);outline-offset:1px}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .btn{background:var(--sun);border-color:var(--sun);font-weight:700;cursor:pointer;margin-top:14px}
 .btn.alt{background:var(--paper);border-color:var(--slate)}
-.slip{background:var(--paper);border:2px dashed var(--slate);border-radius:4px;padding:12px 14px;margin-top:14px;font-variant-numeric:tabular-nums}
-.slip div{display:flex;justify-content:space-between;gap:8px;padding:3px 0}
-.slip .tot{border-top:2px solid var(--ink);margin-top:6px;padding-top:8px;font-size:24px;font-weight:700}
-.warn{background:#fdecea;color:var(--bad);border-left:5px solid var(--bad);padding:8px 10px;margin-top:10px;font-weight:700}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;margin-top:10px}
+.seg button{font-weight:700;border-radius:0;cursor:pointer}.seg button:first-child{border-radius:8px 0 0 8px}.seg button:last-child{border-radius:0 8px 8px 0}
+.seg .on{background:var(--slate);color:#fff;border-color:var(--slate)}
 .card{background:var(--paper);border-radius:8px;padding:12px 14px;margin-top:10px;border:1px solid var(--line)}
 .card h3{margin:0 0 4px;font-size:18px}
 .muted{color:#5b6a72;font-size:15px}
 .big{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums}
-.late{color:var(--bad)}.ok{color:var(--ok)}
-.acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.acts button{margin:0}
+.ok{color:var(--ok)}.bad{color:var(--bad)}
+.net{background:var(--slate);color:#fff;border-radius:8px;padding:12px 14px;margin-top:10px}.net .big{color:var(--sun);font-size:32px}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}.kpi{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:10px 12px}.kpi .big{font-size:22px}
+.warn{background:#fff8e1;border-left:5px solid var(--sun);padding:8px 10px;margin-top:10px;font-weight:700}
+.hb{display:grid;grid-template-columns:100px 1fr 96px;gap:8px;align-items:center;margin:8px 0;font-size:15px}
+.hb b{display:block;height:16px;border-radius:3px;background:var(--slate)}
+.hb span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.hb span:last-child{text-align:right;font-variant-numeric:tabular-nums}
 nav{position:fixed;bottom:0;left:0;right:0;display:grid;grid-template-columns:repeat(5,1fr);background:var(--ink)}
 nav button{border:0;border-radius:0;background:none;color:#fff;min-height:64px;font-weight:700}
 nav button.on{background:var(--sun);color:var(--ink)}
 h2{margin:6px 0 0}.note{font-size:14px;color:#5b6a72;margin-top:18px}
-.kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}.kpi{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:10px 12px}.kpi .big{font-size:22px}
-.net{background:var(--slate);color:#fff;border-radius:8px;padding:12px 14px;margin-top:10px}.net .big{color:var(--sun)}
-.bars{display:flex;align-items:flex-end;gap:6px;height:100px;margin-top:8px}.bars div{flex:1;text-align:center;font-size:13px}.bars i{display:block;background:var(--slate);border-radius:3px 3px 0 0;min-height:2px}
-.hb{display:grid;grid-template-columns:70px 1fr 90px;gap:8px;align-items:center;margin:8px 0;font-size:15px}.hb b{display:block;height:16px;border-radius:3px}.hb span:last-child{text-align:right;font-variant-numeric:tabular-nums}
 .ms{color:var(--ok);font-weight:700;margin-top:8px;min-height:24px}
+.cols{display:flex;align-items:flex-end;gap:10px;margin-top:10px}.col{flex:1;text-align:center;font-size:13px}
+.pair{display:flex;align-items:flex-end;justify-content:center;gap:3px;height:120px}.pair i{display:block;width:45%;border-radius:3px 3px 0 0;min-height:2px}
+.legend{display:flex;gap:14px;font-size:14px;margin-top:8px}.legend span:before{content:"";display:inline-block;width:12px;height:12px;border-radius:2px;margin-right:6px;vertical-align:-1px;background:var(--c)}
 </style></head><body>
-<header><b>Tipper Ledger</b><small>Pilot mockup. Your entries stay on this phone.</small></header>
+<header><b>Vehicle Money</b><small>Pilot mockup. Your entries stay on this phone.</small></header>
 <main>
 <section class="tab on" id="t-home"><h2>Last 30 days at a glance</h2><div id="home"></div></section>
-<section class="tab" id="t-trip">
-<h2>Add trip</h2>
-<label for="cu">Customer</label><select id="cu"></select>
-<div class="row"><div><label for="tr">Truck</label><select id="tr"></select></div><div><label for="ma">Material</label><select id="ma"></select></div></div>
-<div class="row"><div><label for="tn">Load (units)</label><input id="tn" type="number" inputmode="decimal" min="0" step="0.1"></div><div><label for="km">Distance (km)</label><input id="km" type="number" inputmode="decimal" min="0" step="0.5"></div></div>
-<label for="fo">Fare (leave empty to calculate)</label><input id="fo" type="number" inputmode="decimal" min="0">
-<div id="warn"></div><div class="slip" id="slip"></div>
-<button class="btn" id="save">Save trip</button><div class="ms" id="ms" role="status"></div>
-<h2 style="margin-top:22px">Recent trips</h2><div id="recent"></div>
-</section>
-<section class="tab" id="t-dues"><h2>Who owes you</h2><div id="dues"></div></section>
-<section class="tab" id="t-trucks"><h2>Trucks this period</h2><div id="trucks"></div>
-<div class="card"><h3>Add expense</h3>
-<label for="et">Truck</label><select id="et"></select>
-<div class="row"><div><label for="ek">Type</label><select id="ek"><option>Diesel</option><option>Repair</option><option>Service</option><option>Tyre</option><option>Driver pay</option><option>Crusher</option><option>Other</option></select></div><div><label for="ea">Amount</label><input id="ea" type="number" inputmode="decimal" min="0"></div></div>
-<button class="btn alt" id="addx">Add expense</button></div></section>
-<section class="tab" id="t-set"><h2>Rates and settings</h2><div id="set"></div>
+<section class="tab" id="t-add"><h2 id="ah">Add an entry</h2>
+<div class="seg"><button type="button" id="kx" class="on">Expense (spent)</button><button type="button" id="kr">Income (earned)</button></div>
+<label for="ev">Vehicle</label><select id="ev"></select>
+<div id="tw"><label for="ek">Type</label><select id="ek"></select></div>
+<label for="ea">Amount (₹)</label><input id="ea" type="number" inputmode="decimal" min="0">
+<label for="ed">Date</label><input id="ed" type="date">
+<label for="en">Note (optional)</label><input id="en" placeholder="Example: front tyre, or load to Thrissur">
+<button class="btn" id="save">Save expense</button><button class="btn alt" id="cancel" type="button" style="display:none">Cancel edit</button><div class="ms" id="ms" role="status"></div></section>
+<section class="tab" id="t-hist"><h2>All entries</h2>
+<label for="hf">Show</label><select id="hf"></select><div id="hist"></div></section>
+<section class="tab" id="t-chart"><h2>Charts</h2><label for="cf">Vehicle</label><select id="cf"></select><div class="seg"><button type="button" id="bm" class="on">By month</button><button type="button" id="bw">By week</button><button type="button" id="by">By year</button></div><div id="chart"></div></section>
+<section class="tab" id="t-veh"><h2>Vehicles</h2><div id="veh"></div>
+<div class="card"><h3>Add a vehicle</h3><input id="vn" placeholder="Name or number"><button class="btn alt" id="addv">Add vehicle</button></div>
 <div class="card"><h3>What should change?</h3><textarea id="fb" rows="3" placeholder="Tell us what is missing or confusing"></textarea><button class="btn" id="sendfb">Send on WhatsApp</button></div>
 <button class="btn alt" id="reset">Clear everything on this phone</button>
-<p class="note">This is a mockup for feedback. Add your trucks, materials and customers above, then set the fare bands below.</p></section>
+<p class="note">This is a mockup for feedback. Add your vehicles first, then log what each one spends and earns.</p></section>
 </main>
-<nav><button data-t="home" class="on">Home</button><button data-t="trip">Trip</button><button data-t="dues">Dues</button><button data-t="trucks">Trucks</button><button data-t="set">Settings</button></nav>
+<nav><button data-t="home" class="on">Home</button><button data-t="add">Add</button><button data-t="hist">History</button><button data-t="chart">Charts</button><button data-t="veh">Vehicles</button></nav>
 <script>
-const KEY='tipper-ledger-v4',$=s=>document.querySelector(s),F=n=>'₹'+Math.round(n).toLocaleString('en-IN'),day=864e5,now=Date.now();
-const seed=()=>({materials:[],bands:[{upTo:10,fare:0},{upTo:20,fare:0},{upTo:30,fare:0},{upTo:999,fare:0}],customers:[],trucks:[],trips:[],pays:[],exps:[]});
-let S;try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}if(!S)S=seed();
-const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}},sum=(a,k)=>a.reduce((s,x)=>s+x[k],0),opt=(a,v,l)=>a.map(x=>`<option value="${x[v]}">${x[l]}</option>`).join('');
-const fare=(c,t,k)=>{if(!(t>0&&k>=0))return 0;if(c.method==='unitkm')return t*k*c.tk;return(S.bands.find(b=>k<=b.upTo)||S.bands.at(-1)).fare};
-function calc(){const c=S.customers.find(x=>x.id==$('#cu').value),m=S.materials.find(x=>x.n==$('#ma').value),t=S.trucks.find(x=>x.id==$('#tr').value),qty=+$('#tn').value||0,km=+$('#km').value||0,ov=$('#fo').value,mc=qty*m.r,f=ov!==''?+ov:fare(c,qty,km);return{c,m,t,qty,km,mc,f,amt:mc+f,ov}}
-const need=()=>S.customers.length&&S.trucks.length&&S.materials.length;
-function slip(){if(!need()){$('#slip').innerHTML='<span class="muted">Add a truck, a customer and a material in Settings first.</span>';$('#warn').innerHTML='';return}const x=calc(),how=x.ov!==''?'entered by you':x.c.method==='band'?'distance band, '+x.km+' km':'per unit per km';
-$('label[for=tn]').textContent='Load ('+(x.m.u||'unit')+')';$('#slip').innerHTML=`<div><span>${x.qty} ${x.m.u||'unit'} × ${F(x.m.r)}</span><span>${F(x.mc)}</span></div><div><span>Fare (${how})</span><span>${F(x.f)}</span></div><div class="tot"><span>Total</span><span>${F(x.amt)}</span></div>`;
-$('#warn').innerHTML=x.qty>x.t.cap&&(x.m.u||'unit')=='unit'?`<div class="warn">${x.qty} units is over ${x.t.n}'s capacity of ${x.t.cap} units. Check the load.</div>`:''}
-function dues(){return S.customers.map(c=>{const tr=S.trips.filter(t=>t.cid==c.id).sort((a,b)=>a.d-b.d),paid=sum(S.pays.filter(p=>p.cid==c.id),'amt');let p=paid,old=null;for(const t of tr){if(p>=t.amt)p-=t.amt;else{old=t.d;break}}return{c,bal:sum(tr,'amt')-paid,days:old?Math.floor((Date.now()-old)/day):0,n:tr.length}}).sort((a,b)=>b.bal-a.bal)}
-function pay(id){const v=+prompt('Amount received (₹)');if(v>0){S.pays.push({d:Date.now(),cid:id,amt:v});save();render()}}
-function remind(id){const d=dues().find(x=>x.c.id==id),l=S.trips.filter(t=>t.cid==id).slice(-5).map(t=>`${new Date(t.d).toLocaleDateString('en-IN')}: ${t.qty} ${t.u||'unit'} ${t.mat} - ${F(t.amt)}`);
-window.open('https://wa.me/'+(d.c.ph||'')+'?text='+encodeURIComponent(`Hello ${d.c.n}, a gentle reminder: ${F(d.bal)} is pending.\nRecent loads:\n${l.join('\n')}\nPlease pay when you can. Thank you.`),'_blank')}
-const set=(a,i,k,v,num)=>{a[i][k]=num?+v:v;save();render()};
-function home(){const from=Date.now()-30*day,tr=S.trips.filter(t=>t.d>=from),inc=sum(tr,'amt'),ex=sum(S.exps.filter(e=>e.d>=from),'amt'),col=sum(S.pays.filter(p=>p.d>=from),'amt'),D=dues().filter(d=>d.bal>0),owed=D.reduce((s,d)=>s+d.bal,0),late=D.filter(d=>d.days>15).length;
-const k=(l,v,c,h)=>`<div class="kpi"><span class="muted">${l}</span><div class="big ${c}">${v}</div><span class="muted">${h}</span></div>`;
-const wk=[...Array(7)].map((_,i)=>{const s=new Date().setHours(0,0,0,0)-(6-i)*day;return{n:S.trips.filter(t=>t.d>=s&&t.d<s+day).length,l:new Date(s).toLocaleDateString('en-IN',{weekday:'short'})}}),mx=Math.max(1,...wk.map(w=>w.n));
-const tp=S.trucks.map(t=>({n:t.n,p:sum(S.trips.filter(x=>x.tid==t.id&&x.d>=from),'amt')-sum(S.exps.filter(x=>x.tid==t.id&&x.d>=from),'amt')})),tm=Math.max(1,...tp.map(t=>Math.abs(t.p)));
-$('#home').innerHTML=`${need()?'':'<div class="warn">Start here: open Settings and add your trucks, customers and materials.</div>'}<div class="net"><span>Left after costs</span><div class="big">${F(inc-ex)}</div></div>
-<div class="kpis">${k('Earned from trips',F(inc),'',tr.length+' trips')}${k('Money received',F(col),'ok','paid by customers')}${k('Costs',F(ex),'','diesel, repairs, etc.')}${k('Still owed to you',F(owed),late?'late':'',late?late+' waiting over 15 days':'nobody is late')}</div>
-<div class="card"><h3>Call these first</h3>${D.length?D.slice(0,3).map(d=>`<div class="acts" style="grid-template-columns:1fr auto;align-items:center"><div><b>${d.c.n}</b><br><span class="muted">${F(d.bal)} · ${d.days} days</span></div><button class="btn" style="margin:0;width:auto" onclick="remind(${d.c.id})">Remind</button></div>`).join(''):'<span class="muted">Nobody owes you anything.</span>'}</div>
-<div class="card"><h3>Trips in the last 7 days</h3><div class="bars">${wk.map(w=>`<div><small>${w.n}</small><i style="height:${w.n/mx*60}px"></i>${w.l}</div>`).join('')}</div></div>
-<div class="card"><h3>Profit by truck</h3>${tp.map(t=>`<div class="hb"><span>${t.n}</span><b style="width:${Math.max(3,Math.abs(t.p)/tm*100)}%;background:${t.p<0?'var(--bad)':'var(--ok)'}"></b><span>${F(t.p)}</span></div>`).join('')}</div>`}
-function render(){home();
-$('#recent').innerHTML=S.trips.slice(-8).reverse().map(t=>`<div class="card"><h3>${S.customers.find(c=>c.id==t.cid).n}: ${F(t.amt)}</h3><span class="muted">${new Date(t.d).toLocaleDateString('en-IN')} · ${S.trucks.find(x=>x.id==t.tid).n} · ${t.qty} ${t.u||'unit'} ${t.mat} · ${t.km} km</span></div>`).join('');
-$('#dues').innerHTML=dues().map(d=>`<div class="card"><h3>${d.c.n}</h3><div class="big ${d.bal>0?'late':'ok'}">${F(d.bal)}</div><span class="muted">${d.bal>0?'Oldest unpaid load: '+d.days+' days ago':'All paid'} · ${d.n} trips</span>${d.bal>0?`<div class="acts"><button class="btn alt" onclick="pay(${d.c.id})">Record payment</button><button class="btn" onclick="remind(${d.c.id})">Send reminder</button></div>`:''}</div>`).join('');
-$('#trucks').innerHTML=S.trucks.map(t=>{const tr=S.trips.filter(x=>x.tid==t.id),inc=sum(tr,'amt'),ex=sum(S.exps.filter(x=>x.tid==t.id),'amt'),tn=sum(tr.filter(x=>(x.u||'unit')=='unit'),'qty'),p=inc-ex;return`<div class="card"><h3>${t.n} <span class="muted">(${t.cap} units)</span></h3><div class="big ${p<0?'late':'ok'}">${F(p)}</div><span class="muted">Income ${F(inc)} · Costs ${F(ex)} · ${tn} units moved${tn?' · '+F(p/tn)+' per unit':''}</span></div>`}).join('');
-$('#set').innerHTML=`<div class="card"><h3>Add a truck</h3><div class="row"><input id="nt" placeholder="Name or number"><input id="nc" type="number" inputmode="decimal" placeholder="Capacity in units"></div><button class="btn alt" onclick="addTruck()">Add truck</button></div>
-<div class="card"><h3>Add a material</h3><div class="row"><input id="nm" placeholder="Material name"><input id="nr" type="number" inputmode="decimal" placeholder="Rate per unit"></div><input id="nu" style="margin-top:10px" placeholder="Counted in (leave empty for unit)"><button class="btn alt" onclick="addMat()">Add material</button></div>
-<div class="card"><h3>Add a customer</h3><div class="row"><input id="cn" placeholder="Customer name"><input id="cp" type="tel" placeholder="WhatsApp number with 91"></div><button class="btn alt" onclick="addCust()">Add customer</button></div>
-<div class="card"><h3>Material rate per unit</h3>${S.materials.map((m,i)=>`<label>${m.n} (rate per ${m.u||'unit'})</label><input type="number" value="${m.r}" onchange="set(S.materials,${i},'r',this.value,1)">`).join('')}</div>
-<div class="card"><h3>Distance band fares (per trip)</h3>${S.bands.map((b,i)=>`<div class="row"><div><label>Up to km</label><input type="number" value="${b.upTo}" onchange="set(S.bands,${i},'upTo',this.value,1)"></div><div><label>Fare</label><input type="number" value="${b.fare}" onchange="set(S.bands,${i},'fare',this.value,1)"></div></div>`).join('')}</div>
-<div class="card"><h3>Customers</h3>${S.customers.map((c,i)=>`<label>${c.n}</label><select onchange="set(S.customers,${i},'method',this.value)"><option value="band" ${c.method=='band'?'selected':''}>Distance band fare</option><option value="unitkm" ${c.method=='unitkm'?'selected':''}>Per unit per km</option></select><div class="row"><input type="number" placeholder="Rate per unit per km" value="${c.tk||''}" onchange="set(S.customers,${i},'tk',this.value,1)"><input type="tel" placeholder="WhatsApp number with 91" value="${c.ph}" onchange="set(S.customers,${i},'ph',this.value)"></div>`).join('')}</div>`;if(!$('#recent').innerHTML)$('#recent').innerHTML='<p class="muted">No trips yet.</p>';if(!$('#dues').innerHTML)$('#dues').innerHTML='<p class="muted">Add your customers in Settings, then log trips.</p>';if(!$('#trucks').innerHTML)$('#trucks').innerHTML='<p class="muted">Add your trucks in Settings.</p>';slip()}
-function addTruck(){const n=$('#nt').value.trim(),c=+$('#nc').value;if(n&&c>0){S.trucks.push({id:Date.now(),n,cap:c});save();fill();render()}}
-function addMat(){const n=$('#nm').value.trim(),r=+$('#nr').value;if(n&&r>0){S.materials.push({n,r,u:$('#nu').value.trim()||'unit'});save();fill();render()}}
-function addCust(){const n=$('#cn').value.trim();if(n){S.customers.push({id:Date.now(),n,ph:$('#cp').value.trim(),method:'band',tk:0});save();fill();render()}}
-function fill(){$('#cu').innerHTML=opt(S.customers,'id','n');$('#tr').innerHTML=opt(S.trucks,'id','n');$('#et').innerHTML=opt(S.trucks,'id','n');$('#ma').innerHTML=opt(S.materials,'n','n')}
-['cu','tr','ma','tn','km','fo'].forEach(i=>$('#'+i).addEventListener('input',slip));
-$('#save').onclick=()=>{if(!need()){$('#ms').textContent='Add a truck, a customer and a material in Settings first.';return}const x=calc();if(!(x.qty>0)){$('#ms').textContent='Enter the weight in qty first.';return}
-S.trips.push({d:Date.now(),cid:x.c.id,tid:x.t.id,mat:x.m.n,u:x.m.u||'unit',qty:x.qty,km:x.km,fare:x.f,amt:x.amt});save();['tn','km','fo'].forEach(i=>$('#'+i).value='');$('#ms').textContent='Trip saved. '+x.c.n+' now owes '+F(dues().find(d=>d.c.id==x.c.id).bal)+'.';render()};
-$('#addx').onclick=()=>{const a=+$('#ea').value;if(a>0){S.exps.push({d:Date.now(),tid:+$('#et').value,type:$('#ek').value,amt:a});$('#ea').value='';save();render()}};
-$('#sendfb').onclick=()=>window.open('https://wa.me/?text='+encodeURIComponent('Tipper Ledger feedback: '+$('#fb').value),'_blank');
-$('#reset').onclick=()=>{if(confirm('Delete everything saved on this phone?')){S=seed();save();fill();render()}};
+const KEY='vehicle-expenses-v1',$=s=>document.querySelector(s),day=864e5;
+const F=n=>(n<0?'-':'')+'₹'+Math.round(Math.abs(n)).toLocaleString('en-IN');
+const TYPES=['Diesel','Repair','Service','Tyre','Driver pay','Insurance / tax','Police fine','Other'];
+let S;try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}if(!S)S={vehicles:[],exps:[]};S.revs=S.revs||[];
+let kind='x',editing=null,cmode='m';
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}},sum=a=>a.reduce((s,x)=>s+x.amt,0),vn=id=>(S.vehicles.find(v=>v.id==id)||{n:'Removed vehicle'}).n,D=d=>new Date(d).toLocaleDateString('en-IN',{day:'numeric',month:'short'});
+const today=()=>new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
+const all=()=>[...S.exps.map(e=>({...e,k:'x'})),...S.revs.map(e=>({...e,k:'r',type:'Income'}))].sort((a,b)=>b.d-a.d);
+const bars=(r,sign)=>{const m=Math.max(1,...r.map(x=>Math.abs(x.v)));return r.length?r.map(x=>`<div class="hb"><span>${x.l}</span><b style="width:${Math.max(3,Math.abs(x.v)/m*100)}%;${sign?'background:'+(x.v<0?'var(--bad)':'var(--ok)'):''}"></b><span>${F(x.v)}</span></div>`).join(''):'<span class="muted">Nothing yet.</span>'};
+const row=(e,del)=>`<div class="card"><h3>${vn(e.vid)} · <span class="${e.k=='r'?'ok':''}">${e.k=='r'?'+':'-'}${F(e.amt)}</span></h3><span class="muted">${D(e.d)} · ${e.type}${e.note?' · '+e.note:''}</span>${del?`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="btn alt" style="margin-top:8px" onclick="edit('${e.k}',${e.id})">Edit</button><button class="btn alt" style="margin-top:8px" onclick="del('${e.k}',${e.id})">Delete</button></div>`:''}</div>`;
+function edit(k,id){const e=(k=='x'?S.exps:S.revs).find(x=>x.id==id);if(!e)return;editing={k,id};setKind(k);$('#kx').disabled=$('#kr').disabled=true;
+document.querySelectorAll('nav button,.tab').forEach(x=>x.classList.remove('on'));document.querySelector('nav [data-t=add]').classList.add('on');$('#t-add').classList.add('on');
+$('#ah').textContent='Edit entry';$('#save').textContent='Save changes';$('#cancel').style.display='';
+$('#ev').value=e.vid;if(k=='x')$('#ek').value=e.type;$('#ea').value=e.amt;$('#ed').value=new Date(e.d-new Date(e.d).getTimezoneOffset()*6e4).toISOString().slice(0,10);$('#en').value=e.note||'';scrollTo(0,0)}
+function endEdit(){editing=null;$('#ah').textContent='Add an entry';$('#cancel').style.display='none';$('#kx').disabled=$('#kr').disabled=false;$('#save').textContent=kind=='x'?'Save expense':'Save income'}
+function del(k,id){if(confirm('Delete this entry?')){if(k=='x')S.exps=S.exps.filter(e=>e.id!=id);else S.revs=S.revs.filter(e=>e.id!=id);save();render()}}
+const tot=(vid,from)=>{const f=e=>e.d>=from&&(!vid||e.vid==vid),i=sum(S.revs.filter(f)),s=sum(S.exps.filter(f));return{i,s,p:i-s}};
+const vpair=from=>{const R=S.vehicles.map(v=>({n:v.n,...tot(v.id,from)})),m=Math.max(1,...R.flatMap(r=>[r.i,r.s]));return R.length?R.map(r=>`<div style="margin:12px 0"><div style="display:flex;justify-content:space-between;gap:8px"><b>${r.n}</b><b class="${r.p<0?'bad':'ok'}">${F(r.p)}</b></div><div class="hb" style="grid-template-columns:62px 1fr 84px;margin:4px 0"><span>Earned</span><b style="width:${Math.max(2,r.i/m*100)}%;background:var(--ok)"></b><span>${F(r.i)}</span></div><div class="hb" style="grid-template-columns:62px 1fr 84px;margin:4px 0"><span>Spent</span><b style="width:${Math.max(2,r.s/m*100)}%"></b><span>${F(r.s)}</span></div></div>`).join(''):'<span class="muted">Add your vehicles first.</span>'};
+function periods(){const now=new Date();if(cmode=='y')return[...Array(3)].map((_,i)=>{const y=now.getFullYear()-2+i;return{s:new Date(y,0,1).getTime(),e:new Date(y+1,0,1).getTime(),l:String(y),t:String(y)}});if(cmode=='m')return[...Array(6)].map((_,i)=>{const d=new Date(now.getFullYear(),now.getMonth()-5+i,1),l=d.toLocaleDateString('en-IN',{month:'short'});return{s:d.getTime(),e:new Date(d.getFullYear(),d.getMonth()+1,1).getTime(),l,t:l}});
+const mon=new Date(now.getFullYear(),now.getMonth(),now.getDate());mon.setDate(mon.getDate()-(mon.getDay()+6)%7);
+return[...Array(8)].map((_,i)=>{const s=new Date(mon);s.setDate(s.getDate()-7*(7-i));const e=new Date(s);e.setDate(e.getDate()+7);const m=s.toLocaleDateString('en-IN',{month:'short'});return{s:s.getTime(),e:e.getTime(),l:s.getDate()+'<br>'+m,t:s.getDate()+' '+m}})}
+function chart(){const f=$('#cf').value,M=periods().map(m=>{const g=e=>e.d>=m.s&&e.d<m.e&&(!f||e.vid==f);return{...m,i:sum(S.revs.filter(g)),x:sum(S.exps.filter(g))}}),mx=Math.max(1,...M.flatMap(m=>[m.i,m.x])),E=S.exps.filter(e=>!f||e.vid==f),bt=TYPES.map(t=>({l:t,v:sum(E.filter(e=>e.type==t))})).filter(x=>x.v>0).sort((a,b)=>b.v-a.v);
+$('#chart').innerHTML=`<div class="card"><h3>Earned and spent, ${cmode=='m'?'last 6 months':cmode=='y'?'last 3 years':'last 8 weeks'}</h3><div class="cols">${M.map(m=>`<div class="col"><div class="pair"><i style="height:${m.i/mx*100}%;background:var(--ok)"></i><i style="height:${m.x/mx*100}%;background:var(--slate)"></i></div>${m.l}</div>`).join('')}</div><div class="legend"><span style="--c:var(--ok)">Earned</span><span style="--c:var(--slate)">Spent</span></div></div>
+<div class="card"><h3>${cmode=='m'?'Month by month':cmode=='y'?'Year by year':'Week by week (weeks start Monday)'}</h3><div class="hb" style="grid-template-columns:${cmode=='m'?'50px':'64px'} 1fr 1fr;margin:6px 0"><span></span><span class="muted" style="text-align:left">Earned</span><span class="muted">Spent</span></div>${M.map(m=>`<div class="hb" style="grid-template-columns:${cmode=='m'?'50px':'64px'} 1fr 1fr;margin:6px 0"><span>${m.t}</span><span class="ok" style="text-align:left">${F(m.i)}</span><span>${F(m.x)}</span></div>`).join('')}</div>
+<div class="card"><h3>Spent, by type (all time)</h3>${bars(bt)}</div>`}
+function fill(){const o=S.vehicles.map(v=>`<option value="${v.id}">${v.n}</option>`).join(''),cur=$('#hf').value,cv=$('#ev').value,cc=$('#cf').value;$('#ev').innerHTML=o;$('#ev').value=cv;$('#hf').innerHTML='<option value="">All vehicles</option>'+o;$('#hf').value=cur;$('#cf').innerHTML='<option value="">All vehicles</option>'+o;$('#cf').value=cc;$('#ek').innerHTML=TYPES.map(t=>`<option>${t}</option>`).join('')}
+function hist(){const f=$('#hf').value,L=all().filter(e=>!f||e.vid==f),t=tot(f,0);$('#hist').innerHTML=`<div class="net"><span>${f?vn(f):'All vehicles'}: left after costs</span><div class="big">${F(t.p)}</div><span>Earned ${F(t.i)} · Spent ${F(t.s)}</span></div>`+(L.map(e=>row(e,1)).join('')||'<p class="muted">No entries yet.</p>')}
+function render(){const from=Date.now()-30*day,t=tot('',from),ty=tot('',new Date(new Date().getFullYear(),0,1).getTime()),E=S.exps.filter(e=>e.d>=from);
+const bv=S.vehicles.map(v=>({l:v.n,v:tot(v.id,from).p})).sort((a,b)=>b.v-a.v),bt=TYPES.map(x=>({l:x,v:sum(E.filter(e=>e.type==x))})).filter(x=>x.v>0).sort((a,b)=>b.v-a.v);
+$('#home').innerHTML=(S.vehicles.length?'':'<div class="warn">Start here: open Vehicles and add your trucks.</div>')+`<div class="net"><span>Left after costs</span><div class="big">${F(t.p)}</div></div>
+<div class="kpis"><div class="kpi"><span class="muted">Earned</span><div class="big ok">${F(t.i)}</div></div><div class="kpi"><span class="muted">Spent</span><div class="big">${F(t.s)}</div></div></div>
+<div class="card"><h3>This year so far</h3><div class="big ${ty.p<0?'bad':'ok'}">${F(ty.p)}</div><span class="muted">left after costs · earned ${F(ty.i)} · spent ${F(ty.s)}</span></div><div class="card"><h3>Earned and spent, by vehicle</h3>${vpair(from)}</div><div class="card"><h3>Spent, by type</h3>${bars(bt)}</div>
+<div class="card"><h3>Latest entries</h3>${all().slice(0,5).map(e=>row(e)).join('')||'<span class="muted">No entries yet.</span>'}</div>`;
+$('#veh').innerHTML=S.vehicles.map(v=>{const x=tot(v.id,from);return`<div class="card"><h3>${v.n}</h3><div class="big ${x.p<0?'bad':'ok'}">${F(x.p)}</div><span class="muted">Last 30 days: earned ${F(x.i)} · spent ${F(x.s)}</span></div>`}).join('')||'<p class="muted">No vehicles yet.</p>';
+fill();hist();chart()}
+function setKind(k){kind=k;$('#kx').classList.toggle('on',k=='x');$('#kr').classList.toggle('on',k=='r');$('#tw').style.display=k=='x'?'':'none';$('#save').textContent=k=='x'?'Save expense':'Save income';$('#ms').textContent=''}
+$('#kx').onclick=()=>setKind('x');$('#kr').onclick=()=>setKind('r');
+$('#save').onclick=()=>{const a=+$('#ea').value;if(!S.vehicles.length){$('#ms').textContent='Add a vehicle first.';return}if(!(a>0)){$('#ms').textContent='Enter the amount.';return}
+const b={id:Date.now(),d:new Date(($('#ed').value||today())+'T12:00:00').getTime(),vid:$('#ev').value,amt:a,note:$('#en').value.trim()};
+if(editing){const L=editing.k=='x'?S.exps:S.revs,t=L.find(e=>e.id==editing.id);if(t){Object.assign(t,{d:b.d,vid:b.vid,amt:b.amt,note:b.note});if(editing.k=='x')t.type=$('#ek').value}}else if(kind=='x')S.exps.push({...b,type:$('#ek').value});else S.revs.push(b);
+save();$('#ea').value='';$('#en').value='';const w=!!editing;$('#ms').textContent=(w?'Updated ':'Saved ')+(kind=='x'?'expense ':'income ')+F(a)+' for '+vn(b.vid)+'.';endEdit();render();if(w)document.querySelector('nav [data-t=hist]').click()};
+$('#addv').onclick=()=>{const n=$('#vn').value.trim();if(n){S.vehicles.push({id:Date.now(),n});$('#vn').value='';save();render()}};
+$('#hf').onchange=hist;$('#cf').onchange=chart;[['bm','m'],['bw','w'],['by','y']].forEach(([id,m])=>$('#'+id).onclick=()=>{cmode=m;['bm','bw','by'].forEach(x=>$('#'+x).classList.toggle('on',x==id));chart()});$('#cancel').onclick=()=>{endEdit();$('#ea').value='';$('#en').value='';$('#ms').textContent=''};
+$('#sendfb').onclick=()=>window.open('https://wa.me/?text='+encodeURIComponent('Vehicle Money feedback: '+$('#fb').value),'_blank');
+$('#reset').onclick=()=>{if(confirm('Delete everything saved on this phone?')){S={vehicles:[],exps:[],revs:[]};save();render()}};
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button,.tab').forEach(e=>e.classList.remove('on'));b.classList.add('on');$('#t-'+b.dataset.t).classList.add('on');scrollTo(0,0)});
-fill();render();
+$('#ed').value=today();render();
 </script></body></html>
