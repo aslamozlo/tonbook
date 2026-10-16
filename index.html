@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Vehicle Money - pilot mockup</title>
+<title>Vehicle Money (Demo)</title>
+<meta name="theme-color" content="#3b4a52"><link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root{--ink:#1f2a30;--road:#e9edef;--slate:#3b4a52;--sun:#f2b705;--ok:#2e7d4f;--bad:#b3261e;--paper:#fff;--line:#c9d1d5}
@@ -37,8 +38,9 @@ h2{margin:6px 0 0}.note{font-size:14px;color:#5b6a72;margin-top:18px}
 .cols{display:flex;align-items:flex-end;gap:10px;margin-top:10px}.col{flex:1;text-align:center;font-size:13px}
 .pair{display:flex;align-items:flex-end;justify-content:center;gap:3px;height:120px}.pair i{display:block;width:45%;border-radius:3px 3px 0 0;min-height:2px}
 .legend{display:flex;gap:14px;font-size:14px;margin-top:8px}.legend span:before{content:"";display:inline-block;width:12px;height:12px;border-radius:2px;margin-right:6px;vertical-align:-1px;background:var(--c)}
+.tag{background:var(--sun);color:var(--ink);font-size:12px;font-weight:700;padding:2px 8px;border-radius:10px;margin-left:8px;vertical-align:3px}
 </style></head><body>
-<header><b>Vehicle Money</b><small>Pilot mockup. Your entries stay on this phone.</small></header>
+<header><b>Vehicle Money</b><span class="tag">DEMO</span><small>Draft demo version. Your entries stay on this phone.</small></header>
 <main>
 <section class="tab on" id="t-home"><h2>Last 30 days at a glance</h2><div id="home"></div></section>
 <section class="tab" id="t-add"><h2 id="ah">Add an entry</h2>
@@ -54,9 +56,10 @@ h2{margin:6px 0 0}.note{font-size:14px;color:#5b6a72;margin-top:18px}
 <section class="tab" id="t-chart"><h2>Charts</h2><label for="cf">Vehicle</label><select id="cf"></select><div class="seg"><button type="button" id="bm" class="on">By month</button><button type="button" id="bw">By week</button><button type="button" id="by">By year</button></div><div id="chart"></div></section>
 <section class="tab" id="t-veh"><h2>Vehicles</h2><div id="veh"></div>
 <div class="card"><h3>Add a vehicle</h3><input id="vn" placeholder="Name or number"><button class="btn alt" id="addv">Add vehicle</button></div>
+<div class="card"><h3>Backup your data</h3><span class="muted">Save a copy to this phone, or restore one.</span><button class="btn alt" id="exp" type="button">Download backup</button><label for="imp">Restore from a backup file</label><input id="imp" type="file" accept="application/json,.json"></div>
 <div class="card"><h3>What should change?</h3><textarea id="fb" rows="3" placeholder="Tell us what is missing or confusing"></textarea><button class="btn" id="sendfb">Send on WhatsApp</button></div>
 <button class="btn alt" id="reset">Clear everything on this phone</button>
-<p class="note">This is a mockup for feedback. Add your vehicles first, then log what each one spends and earns.</p></section>
+<p class="note">This is a draft demo version for feedback. Add your vehicles first, then log what each one spends and earns.</p></section>
 </main>
 <nav><button data-t="home" class="on">Home</button><button data-t="add">Add</button><button data-t="hist">History</button><button data-t="chart">Charts</button><button data-t="veh">Vehicles</button></nav>
 <script>
@@ -65,11 +68,12 @@ const F=n=>(n<0?'-':'')+'₹'+Math.round(Math.abs(n)).toLocaleString('en-IN');
 const TYPES=['Diesel','Repair','Service','Tyre','Driver pay','Insurance / tax','Police fine','Other'];
 let S;try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}if(!S)S={vehicles:[],exps:[]};S.revs=S.revs||[];
 let kind='x',editing=null,cmode='m';
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}},sum=a=>a.reduce((s,x)=>s+x.amt,0),vn=id=>(S.vehicles.find(v=>v.id==id)||{n:'Removed vehicle'}).n,D=d=>new Date(d).toLocaleDateString('en-IN',{day:'numeric',month:'short'});
 const today=()=>new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
 const all=()=>[...S.exps.map(e=>({...e,k:'x'})),...S.revs.map(e=>({...e,k:'r',type:'Income'}))].sort((a,b)=>b.d-a.d);
 const bars=(r,sign)=>{const m=Math.max(1,...r.map(x=>Math.abs(x.v)));return r.length?r.map(x=>`<div class="hb"><span>${x.l}</span><b style="width:${Math.max(3,Math.abs(x.v)/m*100)}%;${sign?'background:'+(x.v<0?'var(--bad)':'var(--ok)'):''}"></b><span>${F(x.v)}</span></div>`).join(''):'<span class="muted">Nothing yet.</span>'};
-const row=(e,del)=>`<div class="card"><h3>${vn(e.vid)} · <span class="${e.k=='r'?'ok':''}">${e.k=='r'?'+':'-'}${F(e.amt)}</span></h3><span class="muted">${D(e.d)} · ${e.type}${e.note?' · '+e.note:''}</span>${del?`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="btn alt" style="margin-top:8px" onclick="edit('${e.k}',${e.id})">Edit</button><button class="btn alt" style="margin-top:8px" onclick="del('${e.k}',${e.id})">Delete</button></div>`:''}</div>`;
+const row=(e,del)=>`<div class="card"><h3>${esc(vn(e.vid))} · <span class="${e.k=='r'?'ok':''}">${e.k=='r'?'+':'-'}${F(e.amt)}</span></h3><span class="muted">${D(e.d)} · ${esc(e.type)}${e.note?' · '+esc(e.note):''}</span>${del?`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="btn alt" style="margin-top:8px" onclick="edit('${e.k}',${e.id})">Edit</button><button class="btn alt" style="margin-top:8px" onclick="del('${e.k}',${e.id})">Delete</button></div>`:''}</div>`;
 function edit(k,id){const e=(k=='x'?S.exps:S.revs).find(x=>x.id==id);if(!e)return;editing={k,id};setKind(k);$('#kx').disabled=$('#kr').disabled=true;
 document.querySelectorAll('nav button,.tab').forEach(x=>x.classList.remove('on'));document.querySelector('nav [data-t=add]').classList.add('on');$('#t-add').classList.add('on');
 $('#ah').textContent='Edit entry';$('#save').textContent='Save changes';$('#cancel').style.display='';
@@ -77,7 +81,7 @@ $('#ev').value=e.vid;if(k=='x')$('#ek').value=e.type;$('#ea').value=e.amt;$('#ed
 function endEdit(){editing=null;$('#ah').textContent='Add an entry';$('#cancel').style.display='none';$('#kx').disabled=$('#kr').disabled=false;$('#save').textContent=kind=='x'?'Save expense':'Save income'}
 function del(k,id){if(confirm('Delete this entry?')){if(k=='x')S.exps=S.exps.filter(e=>e.id!=id);else S.revs=S.revs.filter(e=>e.id!=id);save();render()}}
 const tot=(vid,from)=>{const f=e=>e.d>=from&&(!vid||e.vid==vid),i=sum(S.revs.filter(f)),s=sum(S.exps.filter(f));return{i,s,p:i-s}};
-const vpair=from=>{const R=S.vehicles.map(v=>({n:v.n,...tot(v.id,from)})),m=Math.max(1,...R.flatMap(r=>[r.i,r.s]));return R.length?R.map(r=>`<div style="margin:12px 0"><div style="display:flex;justify-content:space-between;gap:8px"><b>${r.n}</b><b class="${r.p<0?'bad':'ok'}">${F(r.p)}</b></div><div class="hb" style="grid-template-columns:62px 1fr 84px;margin:4px 0"><span>Earned</span><b style="width:${Math.max(2,r.i/m*100)}%;background:var(--ok)"></b><span>${F(r.i)}</span></div><div class="hb" style="grid-template-columns:62px 1fr 84px;margin:4px 0"><span>Spent</span><b style="width:${Math.max(2,r.s/m*100)}%"></b><span>${F(r.s)}</span></div></div>`).join(''):'<span class="muted">Add your vehicles first.</span>'};
+const vpair=from=>{const R=S.vehicles.map(v=>({n:v.n,...tot(v.id,from)})),m=Math.max(1,...R.flatMap(r=>[r.i,r.s]));return R.length?R.map(r=>`<div style="margin:12px 0"><div style="display:flex;justify-content:space-between;gap:8px"><b>${esc(r.n)}</b><b class="${r.p<0?'bad':'ok'}">${F(r.p)}</b></div><div class="hb" style="grid-template-columns:62px 1fr 84px;margin:4px 0"><span>Earned</span><b style="width:${Math.max(2,r.i/m*100)}%;background:var(--ok)"></b><span>${F(r.i)}</span></div><div class="hb" style="grid-template-columns:62px 1fr 84px;margin:4px 0"><span>Spent</span><b style="width:${Math.max(2,r.s/m*100)}%"></b><span>${F(r.s)}</span></div></div>`).join(''):'<span class="muted">Add your vehicles first.</span>'};
 function periods(){const now=new Date();if(cmode=='y')return[...Array(3)].map((_,i)=>{const y=now.getFullYear()-2+i;return{s:new Date(y,0,1).getTime(),e:new Date(y+1,0,1).getTime(),l:String(y),t:String(y)}});if(cmode=='m')return[...Array(6)].map((_,i)=>{const d=new Date(now.getFullYear(),now.getMonth()-5+i,1),l=d.toLocaleDateString('en-IN',{month:'short'});return{s:d.getTime(),e:new Date(d.getFullYear(),d.getMonth()+1,1).getTime(),l,t:l}});
 const mon=new Date(now.getFullYear(),now.getMonth(),now.getDate());mon.setDate(mon.getDate()-(mon.getDay()+6)%7);
 return[...Array(8)].map((_,i)=>{const s=new Date(mon);s.setDate(s.getDate()-7*(7-i));const e=new Date(s);e.setDate(e.getDate()+7);const m=s.toLocaleDateString('en-IN',{month:'short'});return{s:s.getTime(),e:e.getTime(),l:s.getDate()+'<br>'+m,t:s.getDate()+' '+m}})}
@@ -85,15 +89,15 @@ function chart(){const f=$('#cf').value,M=periods().map(m=>{const g=e=>e.d>=m.s&
 $('#chart').innerHTML=`<div class="card"><h3>Earned and spent, ${cmode=='m'?'last 6 months':cmode=='y'?'last 3 years':'last 8 weeks'}</h3><div class="cols">${M.map(m=>`<div class="col"><div class="pair"><i style="height:${m.i/mx*100}%;background:var(--ok)"></i><i style="height:${m.x/mx*100}%;background:var(--slate)"></i></div>${m.l}</div>`).join('')}</div><div class="legend"><span style="--c:var(--ok)">Earned</span><span style="--c:var(--slate)">Spent</span></div></div>
 <div class="card"><h3>${cmode=='m'?'Month by month':cmode=='y'?'Year by year':'Week by week (weeks start Monday)'}</h3><div class="hb" style="grid-template-columns:${cmode=='m'?'50px':'64px'} 1fr 1fr;margin:6px 0"><span></span><span class="muted" style="text-align:left">Earned</span><span class="muted">Spent</span></div>${M.map(m=>`<div class="hb" style="grid-template-columns:${cmode=='m'?'50px':'64px'} 1fr 1fr;margin:6px 0"><span>${m.t}</span><span class="ok" style="text-align:left">${F(m.i)}</span><span>${F(m.x)}</span></div>`).join('')}</div>
 <div class="card"><h3>Spent, by type (all time)</h3>${bars(bt)}</div>`}
-function fill(){const o=S.vehicles.map(v=>`<option value="${v.id}">${v.n}</option>`).join(''),cur=$('#hf').value,cv=$('#ev').value,cc=$('#cf').value;$('#ev').innerHTML=o;$('#ev').value=cv;$('#hf').innerHTML='<option value="">All vehicles</option>'+o;$('#hf').value=cur;$('#cf').innerHTML='<option value="">All vehicles</option>'+o;$('#cf').value=cc;$('#ek').innerHTML=TYPES.map(t=>`<option>${t}</option>`).join('')}
-function hist(){const f=$('#hf').value,L=all().filter(e=>!f||e.vid==f),t=tot(f,0);$('#hist').innerHTML=`<div class="net"><span>${f?vn(f):'All vehicles'}: left after costs</span><div class="big">${F(t.p)}</div><span>Earned ${F(t.i)} · Spent ${F(t.s)}</span></div>`+(L.map(e=>row(e,1)).join('')||'<p class="muted">No entries yet.</p>')}
+function fill(){const o=S.vehicles.map(v=>`<option value="${v.id}">${esc(v.n)}</option>`).join(''),cur=$('#hf').value,cv=$('#ev').value,cc=$('#cf').value;$('#ev').innerHTML=o;$('#ev').value=cv;$('#hf').innerHTML='<option value="">All vehicles</option>'+o;$('#hf').value=cur;$('#cf').innerHTML='<option value="">All vehicles</option>'+o;$('#cf').value=cc;$('#ek').innerHTML=TYPES.map(t=>`<option>${t}</option>`).join('')}
+function hist(){const f=$('#hf').value,L=all().filter(e=>!f||e.vid==f),t=tot(f,0);$('#hist').innerHTML=`<div class="net"><span>${f?esc(vn(f)):'All vehicles'}: left after costs</span><div class="big">${F(t.p)}</div><span>Earned ${F(t.i)} · Spent ${F(t.s)}</span></div>`+(L.map(e=>row(e,1)).join('')||'<p class="muted">No entries yet.</p>')}
 function render(){const from=Date.now()-30*day,t=tot('',from),ty=tot('',new Date(new Date().getFullYear(),0,1).getTime()),E=S.exps.filter(e=>e.d>=from);
 const bv=S.vehicles.map(v=>({l:v.n,v:tot(v.id,from).p})).sort((a,b)=>b.v-a.v),bt=TYPES.map(x=>({l:x,v:sum(E.filter(e=>e.type==x))})).filter(x=>x.v>0).sort((a,b)=>b.v-a.v);
 $('#home').innerHTML=(S.vehicles.length?'':'<div class="warn">Start here: open Vehicles and add your trucks.</div>')+`<div class="net"><span>Left after costs</span><div class="big">${F(t.p)}</div></div>
 <div class="kpis"><div class="kpi"><span class="muted">Earned</span><div class="big ok">${F(t.i)}</div></div><div class="kpi"><span class="muted">Spent</span><div class="big">${F(t.s)}</div></div></div>
 <div class="card"><h3>This year so far</h3><div class="big ${ty.p<0?'bad':'ok'}">${F(ty.p)}</div><span class="muted">left after costs · earned ${F(ty.i)} · spent ${F(ty.s)}</span></div><div class="card"><h3>Earned and spent, by vehicle</h3>${vpair(from)}</div><div class="card"><h3>Spent, by type</h3>${bars(bt)}</div>
 <div class="card"><h3>Latest entries</h3>${all().slice(0,5).map(e=>row(e)).join('')||'<span class="muted">No entries yet.</span>'}</div>`;
-$('#veh').innerHTML=S.vehicles.map(v=>{const x=tot(v.id,from);return`<div class="card"><h3>${v.n}</h3><div class="big ${x.p<0?'bad':'ok'}">${F(x.p)}</div><span class="muted">Last 30 days: earned ${F(x.i)} · spent ${F(x.s)}</span></div>`}).join('')||'<p class="muted">No vehicles yet.</p>';
+$('#veh').innerHTML=S.vehicles.map(v=>{const x=tot(v.id,from);return`<div class="card"><h3>${esc(v.n)}</h3><div class="big ${x.p<0?'bad':'ok'}">${F(x.p)}</div><span class="muted">Last 30 days: earned ${F(x.i)} · spent ${F(x.s)}</span></div>`}).join('')||'<p class="muted">No vehicles yet.</p>';
 fill();hist();chart()}
 function setKind(k){kind=k;$('#kx').classList.toggle('on',k=='x');$('#kr').classList.toggle('on',k=='r');$('#tw').style.display=k=='x'?'':'none';$('#save').textContent=k=='x'?'Save expense':'Save income';$('#ms').textContent=''}
 $('#kx').onclick=()=>setKind('x');$('#kr').onclick=()=>setKind('r');
@@ -106,5 +110,8 @@ $('#hf').onchange=hist;$('#cf').onchange=chart;[['bm','m'],['bw','w'],['by','y']
 $('#sendfb').onclick=()=>window.open('https://wa.me/?text='+encodeURIComponent('Vehicle Money feedback: '+$('#fb').value),'_blank');
 $('#reset').onclick=()=>{if(confirm('Delete everything saved on this phone?')){S={vehicles:[],exps:[],revs:[]};save();render()}};
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button,.tab').forEach(e=>e.classList.remove('on'));b.classList.add('on');$('#t-'+b.dataset.t).classList.add('on');scrollTo(0,0)});
+$('#exp').onclick=()=>{const b=new Blob([JSON.stringify(S,null,1)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='vehicle-money-backup-'+today()+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+$('#imp').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!Array.isArray(d.vehicles)||!Array.isArray(d.exps))throw 0;if(confirm('Replace everything on this phone with this backup?')){S={vehicles:d.vehicles,exps:d.exps,revs:Array.isArray(d.revs)?d.revs:[]};save();render()}}catch(x){alert('That file is not a valid backup.')}};r.readAsText(f);e.target.value=''};
+if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 $('#ed').value=today();render();
 </script></body></html>
